@@ -94,7 +94,7 @@ button{font:inherit}
 .lat a svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .lat a:hover{background:#21502B;color:#fff}
 .lat a.act{background:var(--verde);color:var(--bosque)}
-.lat .sep{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#7FA27A;padding:14px 12px 6px}
+.lat .sep{font-size:.82rem;color:#9DBB95;padding:14px 12px 6px}
 .lat .yo{margin-top:auto;border-top:1px solid #2B4D33;padding:14px 10px 2px;display:flex;gap:10px;align-items:center;font-size:.82rem}
 .lat .yo .av{width:36px;height:36px;border-radius:10px;background:var(--verde);color:var(--bosque);display:grid;place-items:center;font-weight:800;flex:none}
 .lat .yo b{display:block;color:#fff}
@@ -115,7 +115,7 @@ button{font:inherit}
 .lista li:last-child{border-bottom:0}
 .lista .fecha{font-size:.76rem;color:var(--gris-2);white-space:nowrap}
 .tabla{width:100%;border-collapse:collapse;font-size:.88rem}
-.tabla th{text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--gris);font-weight:700;padding:10px 12px;border-bottom:2px solid var(--linea);background:#FAFBF9}
+.tabla th{text-align:left;font-size:.84rem;color:var(--gris);font-weight:700;padding:10px 12px;border-bottom:2px solid var(--linea);background:#FAFBF9}
 .tabla td{padding:11px 12px;border-bottom:1px solid var(--linea);vertical-align:middle}
 .tabla tr:hover td{background:#FAFCF8}
 .tabla a{font-weight:700;text-decoration:none}
@@ -229,3 +229,62 @@ body.contraste .lat{background:#000}
   .cab-pub nav{display:none}
   .telefono{width:100%;max-width:390px}
 }
+
+.hero .in{grid-template-columns:1.12fr .88fr;padding:0 24px;align-items:stretch}
+.hero-txt{padding:62px 0 40px}
+.hero h1{font-size:2.55rem;margin:0 0 18px}
+.marcado{position:relative;white-space:nowrap}
+.marcado svg{position:absolute;left:-2%;bottom:-.28em;width:104%;height:.42em}
+.hero .ctas{margin:26px 0 14px}
+.ico-w{display:inline-grid;width:22px;height:22px}.ico-w svg{width:22px;height:22px;fill:currentColor}
+.sub-w{font-size:.95rem!important;margin-top:10px}
+.sub-w b{color:var(--tinta)}
+.hero-mapa{background:var(--roca);border-left:1px solid var(--linea);display:flex;align-items:center;justify-content:center;padding:24px 0}
+.mapa-cl{height:470px;width:auto;display:block}
+.pasos4{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--linea)}
+.pasos4 div{padding:16px 24px;border-right:1px solid var(--linea);font-size:.86rem;color:var(--gris)}
+.pasos4 div:last-child{border-right:0}
+.pasos4 b{display:block;color:var(--tinta);font-size:.92rem}
+
+.telefono{height:780px}
+.pantalla{background:#EFEAE2}
+.w-barra{background:#075E54;color:#fff;display:flex;justify-content:space-between;padding:8px 22px 0;font-size:.74rem;font-weight:600}
+.w-cab{padding:8px 12px 10px;gap:8px}
+.w-atras{width:22px;height:22px;flex:none}
+.w-nom b{display:flex!important;align-items:center;gap:5px}
+.verif{width:16px;height:16px}
+.w-chat{background-color:#EFEAE2;background-image:radial-gradient(rgba(0,0,0,.035) 1px,transparent 1px);background-size:14px 14px;gap:4px}
+.w-fecha{background:#fff;color:#54656F;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.w-cifrado{align-self:center;max-width:88%;background:#FFEECD;color:#54656F;font-size:.72rem;text-align:center;border-radius:8px;padding:6px 10px;margin:2px 0 8px;line-height:1.35}
+.w-m{padding:0;background:none!important;box-shadow:none;max-width:84%;display:flex;flex-direction:column;gap:3px}
+.w-m .w-txt{padding:7px 10px 4px;border-radius:9px;box-shadow:0 1px 1px rgba(0,0,0,.12);white-space:pre-line}
+.w-m.yo .w-txt{background:#D9FDD3;border-top-right-radius:2px}
+.w-m.bot .w-txt{background:#fff;border-top-left-radius:2px}
+.w-m time{display:block;text-align:right;font-size:.66rem;color:#667781;margin-top:1px}
+.leido{color:#53BDEB;letter-spacing:-2px}
+.w-botones{display:flex;flex-direction:column;gap:3px}
+.w-botones button{background:#fff;border:0;border-radius:8px;padding:9px 10px;color:#027EB5;font-weight:600;font-size:.86rem;cursor:pointer;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+.w-botones button:hover{background:#F5F6F6}
+.w-botones button:disabled{color:#8696A0;cursor:default}
+.w-audio{display:flex;align-items:center;gap:9px;min-width:210px;white-space:normal}
+.av-mini{width:30px;height:30px;border-radius:50%;background:#2F6FB3;color:#fff;font-size:.7rem;font-weight:800;display:grid;place-items:center;flex:none}
+.w-audio .pl{width:0;height:0;border-left:11px solid #54656F;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.w-audio .on{flex:1;height:20px;background:repeating-linear-gradient(90deg,#8FA39A 0 2px,transparent 2px 5px);mask-image:linear-gradient(180deg,transparent,#000 25%,#000 75%,transparent)}
+.w-audio .dur{font-size:.72rem;color:#667781}
+.w-transc{border-top:1px solid rgba(0,0,0,.08);margin-top:6px;padding-top:5px;font-size:.8rem;color:#3B4A54;white-space:normal}
+.w-transc b{display:block;font-size:.72rem;color:#667781}
+.tarjeta-d{display:flex;flex-direction:column;gap:4px;background:#F3F8EE;border-left:3px solid var(--verde-o);border-radius:6px;padding:8px 10px;margin:6px 0;font-size:.84rem;white-space:normal}
+.w-fuente{display:block;font-size:.72rem;color:#667781;line-height:1.3}
+.w-input{padding:8px 8px 14px;gap:6px}
+.w-caja{flex:1;background:#fff;border-radius:24px;display:flex;align-items:center;padding:0 6px 0 14px}
+.w-caja input{border:0;outline:0;padding:11px 0;font:inherit;font-size:.92rem;width:100%;background:none}
+.w-input button{background:#00A884}
+.w-input button svg{fill:#fff}
+.pa-sub{color:var(--gris);font-size:.88rem;margin-bottom:6px}
+.nlu{background:var(--roca);border:1px solid var(--linea);border-radius:10px;padding:12px 14px;min-height:70px}
+.nlu-int{font-family:Montserrat,sans-serif;font-weight:700;color:var(--bosque)}
+.nlu-int::before{content:"Intención: ";font-family:"Source Sans 3",sans-serif;font-weight:600;color:var(--gris)}
+.nlu-datos{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.nlu-datos span{background:#fff;border:1px solid var(--linea);border-radius:6px;padding:2px 8px;font-size:.82rem}
+.nlu-vacio{color:var(--gris);font-size:.86rem}
+@media (max-width:900px){.hero .in{grid-template-columns:1fr}.hero-mapa{border-left:0;border-top:1px solid var(--linea)}.pasos4{grid-template-columns:1fr 1fr}.mapa-cl{height:360px}}

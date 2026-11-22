@@ -75,24 +75,28 @@
     return `<a class="card desafio-c" href="#/desafio/${d.id}"><div class="fila-sb">${est(d.estado)}<span class="canal">${d.canal === 'WhatsApp' ? 'vía WhatsApp' : 'vía web'}</span></div>
       <h3>${esc(d.titulo)}</h3><span class="meta">${d.id} · ${d.comuna}, ${d.region} · ${d.mineral}</span></a>`;
   }
+  function mapaSvg() {
+    const M = MAPA_CHILE, w = M.ancho;
+    return `<svg viewBox="-10 0 ${w + 150} ${M.alto}" class="mapa-cl" role="img" aria-label="Mapa de Chile con las regiones piloto de Atacama y Coquimbo">
+      <path d="${M.pais}" fill="#E9F0E3" stroke="#4D7F3A" stroke-width="1.2" stroke-linejoin="round"/><path d="${M.atacama}" fill="#86C43F" stroke="#4D7F3A"/><path d="${M.coquimbo}" fill="#4D7F3A" stroke="#173A1F"/>
+      <line x1="${M.x_copiapo}" y1="${M.y_atacama}" x2="${w + 26}" y2="${M.y_atacama}" stroke="#173A1F"/><circle cx="${M.x_copiapo}" cy="${M.y_atacama}" r="4.5" fill="#173A1F"/>
+      <text x="${w + 32}" y="${M.y_atacama - 2}" font-size="17" font-weight="700" fill="#173A1F" font-family="Montserrat,sans-serif">Atacama</text><text x="${w + 32}" y="${M.y_atacama + 17}" font-size="13" fill="#56615B">Región piloto</text>
+      <line x1="${M.x_laserena}" y1="${M.y_coquimbo}" x2="${w + 26}" y2="${M.y_coquimbo}" stroke="#173A1F"/><circle cx="${M.x_laserena}" cy="${M.y_coquimbo}" r="4.5" fill="#173A1F"/>
+      <text x="${w + 32}" y="${M.y_coquimbo - 2}" font-size="17" font-weight="700" fill="#173A1F" font-family="Montserrat,sans-serif">Coquimbo</text><text x="${w + 32}" y="${M.y_coquimbo + 17}" font-size="13" fill="#56615B">Región piloto</text></svg>`;
+  }
   function inicio() {
     const abiertos = D.desafios.filter((d) => ['publicado', 'evaluacion', 'pilotaje'].includes(d.estado)).slice(0, 3);
     vista('#/', `
-      <section class="hero"><div class="in"><div>
-        <span class="kick">Programa GreenMineTech · CIPTEMIN</span>
-        <h1>Tecnología probada para la pequeña y mediana minería</h1>
+      <section class="hero"><div class="in"><div class="hero-txt">
+        <h1>Tecnología <span class="marcado">probada<svg viewBox="0 0 200 18" preserveAspectRatio="none" aria-hidden="true"><path d="M3 12 C 50 4, 120 3, 197 9" fill="none" stroke="#86C43F" stroke-width="7" stroke-linecap="round"/></svg></span> para la pequeña y mediana minería</h1>
         <p>Publica el problema de tu faena y te conectamos con proveedores tecnológicos para probar la solución en terreno, con el acompañamiento de CIPTEMIN.</p>
         <div class="ctas"><a class="btn b-verde b-grande" href="#/ingresar">Publicar un desafío</a><a class="btn b-linea b-grande" href="#/ingresar">Registrar una solución</a></div>
-        <a class="wsp-l" href="#/whatsapp"><span class="wsp-ic">${WSP_SVG}</span>¿Sin tiempo? Cuéntanos tu problema por WhatsApp, 24/7</a>
-      </div>
-      <div class="hero-tel"><div class="tc"><b>Agente GreenMineTech</b><small>en línea</small></div><div class="tb">
-        <div class="mm">¡Hola, don Luis! ¿Qué problema tiene en su faena?</div><div class="mm y">🎤 Audio · 0:42</div>
-        <div class="mm">Le entendí: la chancadora se tapa con mineral húmedo. ¿En qué comuna está su faena?</div><div class="mm y">Diego de Almagro</div>
-        <div class="mm">Listo ✅ Armé su desafío. ¿Se lo leo para que lo confirme?</div></div></div>
-      </div>
-      <div class="franja-pasos"><div><i>01</i><b>Formulación</b>del desafío</div><div><i>02</i><b>Convocatoria</b>a proveedores</div><div><i>03</i><b>Evaluación</b>de madurez (TRL)</div><div><i>04</i><b>Emparejamiento</b>asistido</div><div><i>05</i><b>Pilotaje</b>supervisado</div><div><i>06</i><b>Resultados</b>y decisión</div></div>
+        <a class="btn b-wsp b-grande" href="#/whatsapp"><span class="ico-w">${WSP_SVG}</span>Cuéntanos tu desafío por WhatsApp</a>
+        <p class="sub-w">Con el mismo WhatsApp <b>consultas en qué va tu desafío</b>, cuando quieras.</p>
+      </div><div class="hero-mapa">${mapaSvg()}</div></div>
+      <div class="pasos4"><div><b>1. Cuenta tu desafío</b>en la web o por WhatsApp</div><div><b>2. Recibe soluciones</b>evaluadas por su madurez</div><div><b>3. Pilotea en faena</b>con objetivos y KPIs</div><div><b>4. Decide con datos</b>y adopta la tecnología</div></div>
       </section>
-      <section class="sec"><span class="kick">Desafíos abiertos</span><h2>Problemas reales que buscan solución</h2>
+      <section class="sec"><h2>Problemas reales que buscan solución</h2>
         <div class="grid3">${abiertos.map(tarjetaDesafio).join('')}</div>
         <p style="margin-top:16px"><a href="#/desafios">Ver todos los desafíos →</a></p></section>`);
   }
@@ -321,121 +325,186 @@
   }
   function noEncontrado() { vista('#/', '<section class="sec"><h2>No encontramos esa página</h2><a href="#/">Volver al inicio</a></section>'); }
   
-  const AG = { modo: 'inicio', borrador: {}, chat: [] };
+  const AG = { modo: 'inicio', borrador: {}, ultimo: null };
   const hora = () => new Date().toTimeString().slice(0, 5);
+  const PRECIOS = {
+    cobre: { n: 'Cobre', v: 'US$ 4,61', u: 'por libra', var: '+0,8 %', ref: 'Bolsa de Metales de Londres (LME)' },
+    oro: { n: 'Oro', v: 'US$ 2.684', u: 'por onza troy', var: '−0,3 %', ref: 'LBMA' },
+    plata: { n: 'Plata', v: 'US$ 31,20', u: 'por onza troy', var: '+0,5 %', ref: 'LBMA' },
+    hierro: { n: 'Hierro (62 % Fe)', v: 'US$ 104', u: 'por tonelada', var: '−1,1 %', ref: 'índice de referencia del mineral de hierro' },
+  };
   function registrar(t) { D.registro_agente.unshift([hora(), t]); guardar(); pintarAcciones(); }
+  function entendio(intencion, datos) {
+    const el = $('#w-nlu'); if (!el) return;
+    el.innerHTML = `<div class="nlu-int">${intencion}</div>${datos.length ? `<div class="nlu-datos">${datos.map(([k, v]) => `<span><b>${k}:</b> ${esc(v)}</span>`).join('')}</div>` : '<p class="nlu-vacio">Sin datos adicionales en el mensaje.</p>'}`;
+  }
+  const VERIF = '<svg viewBox="0 0 24 24" class="verif"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.2 15.8l.9-2.9-.9-2.9 2.5-1.7.9-2.9 3 .2z" fill="#25D366"/><path d="M8 12.3l2.6 2.6L16.2 9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
   function simulador() {
-    vista('#/whatsapp', `<div class="top"><div><h1>Agente GreenMineTech por WhatsApp</h1><p>Simulación del agente con IA: conversa con el productor, lo orienta y hace cosas por él dentro de la plataforma.</p></div></div>
+    vista('#/whatsapp', `<div class="top"><div><h1>Agente GreenMineTech por WhatsApp</h1><p>Simulación del agente con inteligencia artificial. Acompaña al productor las 24 horas, lo orienta en lo que necesita y hace gestiones por él dentro de la plataforma.</p></div></div>
       <div class="sim"><div class="telefono"><div class="pantalla">
-        <div class="w-cab"><span class="av"><img src="img/greenminetech-logo.png" alt=""></span><div><b>Agente GreenMineTech</b><small id="w-estado">en línea</small></div></div>
-        <div class="w-chat" id="w-chat"><span class="w-fecha">HOY</span></div>
-        <div class="w-rapidas" id="w-rapidas"></div>
-        <form class="w-input" id="w-form"><button type="button" id="w-audio" title="Enviar audio de ejemplo" style="background:#fff"><svg viewBox="0 0 24 24" style="fill:#54656F"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg></button><input id="w-txt" placeholder="Escribe un mensaje" autocomplete="off"><button type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg></button></form>
+        <div class="w-barra"><span>9:41</span><span class="w-ic-est">▮▮▮ 5G ▭</span></div>
+        <div class="w-cab"><svg class="w-atras" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="av"><img src="img/greenminetech-logo.png" alt=""></span><div class="w-nom"><b>GreenMineTech ${VERIF}</b><small id="w-estado">Cuenta de empresa</small></div></div>
+        <div class="w-chat" id="w-chat"><span class="w-fecha">Hoy</span><div class="w-cifrado">🔒 Los mensajes están protegidos. Esta es una cuenta de empresa de GreenMineTech, operada por CIPTEMIN.</div></div>
+        <form class="w-input" id="w-form"><div class="w-caja"><input id="w-txt" placeholder="Mensaje" autocomplete="off"></div>
+          <button type="button" id="w-audio" title="Enviar un audio de ejemplo"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg></button></form>
       </div></div>
-      <div class="panel-ag"><div class="card card-p"><h2>Lo que hace el agente en la plataforma</h2><p style="color:var(--gris);font-size:.9rem">Cada acción queda registrada y la ve el operador de CIPTEMIN en su bandeja.</p><ul class="acciones-ag" id="w-acc"></ul></div>
-        <div class="card card-p" style="margin-top:16px"><h3 style="margin-bottom:4px">Prueba estos mensajes</h3><p style="font-size:.86rem;color:var(--gris)">Escribe lo que quieras o usa un ejemplo. También puedes mandar un audio con el micrófono.</p>
-          <div class="prueba">${['Hola', 'Tengo un problema en mi faena', '¿Cómo va mi desafío?', '¿Qué es GreenMineTech?', '¿Qué significa TRL?', '¿Cuál es el precio del cobre hoy?', 'Quiero hablar con una persona'].map((t) => `<button data-p="${t}">${t}</button>`).join('')}</div></div>
-        <div class="card card-p" style="margin-top:16px;font-size:.88rem"><b>Cómo está construido:</b> WhatsApp Business Cloud API + modelo de lenguaje empresarial entrenado por SETROF con la base de conocimiento de GreenMineTech, conectado a la API de la plataforma. Responde solo sobre el programa y nunca publica sin confirmación.
-          <div style="margin-top:10px;display:flex;gap:8px"><button class="btn b-gris b-chico" id="w-reset">Reiniciar conversación</button>${rol ? '' : '<a class="btn b-linea b-chico" href="#/ingresar">Ver la plataforma</a>'}</div></div></div></div>`, !!rol);
+      <div class="panel-ag">
+        <div class="card card-p"><h2>Qué entendió el agente</h2><p class="pa-sub">Intención y datos que el agente extrae de cada mensaje, aunque el productor escriba con sus propias palabras.</p><div id="w-nlu" class="nlu"><p class="nlu-vacio">Escribe un mensaje para ver cómo lo interpreta.</p></div></div>
+        <div class="card card-p" style="margin-top:16px"><h2>Gestiones en la plataforma</h2><p class="pa-sub">Cada acción queda registrada y la ve el operador de CIPTEMIN.</p><ul class="acciones-ag" id="w-acc"></ul></div>
+        <div class="card card-p" style="margin-top:16px"><h3 style="margin-bottom:8px">Prueba con estos mensajes</h3>
+          <div class="prueba">${['Tengo un problema en mi faena', '¿Cómo va el GMT-0042?', '¿A cuánto está el cobre hoy?', '¿Dónde puedo vender mi mineral?', 'Necesito ayuda con seguridad en la faena', '¿Qué es GreenMineTech?', 'Quiero hablar con una persona', '¿Quién ganó el partido ayer?'].map((t) => `<button data-p="${t}">${t}</button>`).join('')}</div>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn b-gris b-chico" id="w-reset">Reiniciar conversación</button>${rol ? '' : '<a class="btn b-linea b-chico" href="#/ingresar">Ver la plataforma</a>'}</div></div>
+      </div></div>`, !!rol);
     AG.modo = 'inicio'; AG.borrador = {};
     pintarAcciones();
     $('#w-form').addEventListener('submit', (e) => { e.preventDefault(); const t = $('#w-txt').value.trim(); if (!t) return; $('#w-txt').value = ''; recibir(t); });
     $('#w-audio').addEventListener('click', () => recibir('la chancadora se me tapa cuando el mineral viene húmedo, sobre todo en invierno, y pierdo como medio turno', true));
     app.querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () => recibir(b.dataset.p)));
-    $('#w-reset').addEventListener('click', () => { $('#w-chat').innerHTML = '<span class="w-fecha">HOY</span>'; AG.modo = 'inicio'; AG.borrador = {}; rapidas([]); saludar(); });
+    $('#w-reset').addEventListener('click', () => { $('#w-chat').innerHTML = '<span class="w-fecha">Hoy</span>'; AG.modo = 'inicio'; AG.borrador = {}; entendio('—', []); saludar(); });
     saludar();
   }
   function pintarAcciones() {
     const ul = $('#w-acc'); if (!ul) return;
-    ul.innerHTML = D.registro_agente.length ? D.registro_agente.slice(0, 12).map(([h, t]) => `<li><span class="ic">✓</span><span>${esc(t)}<small>${h}</small></span></li>`).join('') : '<li class="vacio" style="display:block">Todavía no hay acciones. Conversa con el agente.</li>';
+    ul.innerHTML = D.registro_agente.length ? D.registro_agente.slice(0, 10).map(([h, t]) => `<li><span class="ic">✓</span><span>${esc(t)}<small>${h}</small></span></li>`).join('') : '<li class="vacio" style="display:block">Todavía no hay gestiones. Conversa con el agente.</li>';
   }
-  function burbuja(html, quien) {
+  const fmtW = (t) => t.replace(/\*([^*]+)\*/g, '<b>$1</b>').replace(/_([^_]+)_/g, '<i>$1</i>');
+  function burbuja(html, quien, botones) {
     const c = $('#w-chat'); if (!c) return;
-    const el = document.createElement('div'); el.className = 'w-m ' + quien; el.innerHTML = html + `<time>${hora()}${quien === 'yo' ? ' ✓✓' : ''}</time>`;
+    const el = document.createElement('div'); el.className = 'w-m ' + quien;
+    el.innerHTML = `<div class="w-txt">${quien === 'bot' ? fmtW(html) : html}<time>${hora()}${quien === 'yo' ? ' <span class="leido">✓✓</span>' : ''}</time></div>`;
+    if (botones && botones.length) {
+      const bx = document.createElement('div'); bx.className = 'w-botones';
+      bx.innerHTML = botones.map((b) => `<button type="button">${b}</button>`).join('');
+      bx.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { bx.querySelectorAll('button').forEach((x) => { x.disabled = true; }); recibir(b.textContent); }));
+      el.appendChild(bx);
+    }
     c.appendChild(el); c.scrollTop = c.scrollHeight;
   }
-  function rapidas(ops) {
-    const r = $('#w-rapidas'); if (!r) return;
-    r.innerHTML = ops.map((o) => `<button type="button">${o}</button>`).join('');
-    r.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => recibir(b.textContent)));
-  }
-  function responder(textos, ops) {
+  function responder(textos, botones) {
     const c = $('#w-chat'); if (!c) return;
-    let i = 0; rapidas([]);
+    let i = 0;
     const sig = () => {
-      if (i >= textos.length) { rapidas(ops || []); return; }
+      if (i >= textos.length) return;
       const e = document.createElement('div'); e.className = 'w-escribe'; e.innerHTML = '<i></i><i></i><i></i>'; c.appendChild(e); c.scrollTop = c.scrollHeight;
-      $('#w-estado').textContent = 'escribiendo…';
-      setTimeout(() => { e.remove(); $('#w-estado').textContent = 'en línea'; burbuja(textos[i], 'bot'); i++; setTimeout(sig, 350); }, 650 + Math.min(1400, textos[i].length * 12));
+      const est = $('#w-estado'); if (est) est.textContent = 'escribiendo…';
+      setTimeout(() => {
+        e.remove(); if ($('#w-estado')) $('#w-estado').textContent = 'Cuenta de empresa';
+        const ultimo = i === textos.length - 1;
+        burbuja(textos[i], 'bot', ultimo ? botones : null); i++;
+        setTimeout(sig, 380);
+      }, 700 + Math.min(1500, textos[i].replace(/<[^>]+>/g, '').length * 11));
     };
     sig();
   }
   function saludar() {
-    responder(['¡Hola, don Luis! 👋 Soy el agente de <b>GreenMineTech</b>, el programa de CIPTEMIN que ayuda a la pequeña minería a encontrar tecnología para sus faenas.',
-      '¿En qué le puedo ayudar hoy? Me puede escribir o mandar un audio, como prefiera.'], ['Tengo un problema en mi faena', '¿Cómo va mi desafío?', '¿Qué es GreenMineTech?']);
+    responder(['¡Hola, don Luis! 👋 Soy el agente de *GreenMineTech*, el programa de CIPTEMIN que conecta a la pequeña minería con tecnología probada.',
+      'Estoy disponible a toda hora. Me puede escribir o mandar un audio, como le acomode. ¿En qué le ayudo hoy?'], ['Contar un problema', 'Consultar mi desafío', 'Precio de metales']);
   }
   const N = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-  function recibir(t, audio) {
-    if (audio) burbuja('<div class="w-audio"><span class="pl"></span><span class="on"></span><span style="font-size:.72rem;color:#667">0:18</span></div>', 'yo');
-    else burbuja(esc(t), 'yo');
-    const n = N(t);
-    if (audio) registrar('Transcribió un audio del productor');
 
-    // flujo de creación de desafío
+  function recibir(t, audio) {
+    if (audio) {
+      burbuja(`<div class="w-audio"><span class="av-mini">LA</span><span class="pl"></span><span class="on"></span><span class="dur">0:18</span></div><div class="w-transc"><b>Transcripción</b> ${esc(t)}</div>`, 'yo');
+      registrar('Transcribió un audio del productor');
+    } else burbuja(esc(t), 'yo');
+    const n = N(t);
+    const id = (t.match(/GMT[-\s]?(\d{1,4})/i) || [])[1];
+
     if (AG.modo === 'problema') return problema(t, audio);
-    function problema(t, audio) {
-      AG.borrador.descripcion = t;
-      AG.borrador.titulo = resumirTitulo(t);
-      AG.modo = 'comuna';
-      return responder([`${audio ? 'Escuché su audio. ' : ''}Le entendí: <i>“${esc(t.length > 140 ? t.slice(0, 140) + '…' : t)}”</i>`, 'Eso le pasa a varias faenas y hay soluciones que se pueden probar. Para armar bien su desafío, ¿en qué comuna está su faena?'], ['Diego de Almagro', 'Tierra Amarilla', 'Andacollo']);
-    }
-    if (AG.modo === 'comuna') { AG.borrador.comuna = t; AG.modo = 'mineral'; return responder([`Perfecto, ${esc(t)}. ¿Qué mineral trabaja principalmente?`], ['Cobre', 'Oro', 'Hierro', 'Otro']); }
-    if (AG.modo === 'mineral') { AG.borrador.mineral = t; AG.modo = 'impacto'; return responder(['Gracias. ¿Cómo le afecta este problema en el día a día?'], ['Pierdo horas de turno', 'Me sube los costos', 'Es un riesgo de seguridad']); }
+    if (AG.modo === 'comuna') { AG.borrador.comuna = t; AG.modo = 'mineral'; entendio('Formular desafío · ubicación', [['Comuna', t]]); return responder([`Perfecto, ${esc(t)}. ¿Qué mineral trabaja principalmente?`], ['Cobre', 'Oro', 'Hierro']); }
+    if (AG.modo === 'mineral') { AG.borrador.mineral = t; AG.modo = 'impacto'; entendio('Formular desafío · mineral', [['Mineral', t]]); return responder(['Gracias. ¿Cómo le afecta este problema en el día a día?'], ['Pierdo horas de turno', 'Me sube los costos', 'Riesgo de seguridad']); }
     if (AG.modo === 'impacto') {
       AG.borrador.impacto = t; AG.modo = 'confirmar'; const b = AG.borrador;
+      entendio('Formular desafío · impacto', [['Impacto', t]]);
       registrar('Armó el borrador de un desafío a partir de la conversación');
-      return responder(['Listo, ya armé su desafío. Se lo leo para que lo revise:',
-        `<div class="tarjeta-d"><b>${esc(b.titulo)}</b><br>${esc(b.descripcion)}<br><br>📍 ${esc(b.comuna)} · ⛏️ ${esc(b.mineral)}<br>⚠️ ${esc(b.impacto)}</div>¿Está bien así para enviarlo a revisión de CIPTEMIN?`], ['Sí, envíalo', 'Quiero cambiar algo']);
+      return responder(['Listo, armé su desafío. Revíselo, por favor:',
+        `<div class="tarjeta-d"><b>${esc(b.titulo)}</b><span>${esc(b.descripcion)}</span><span>📍 ${esc(b.comuna)} · ⛏️ ${esc(b.mineral)} · ⚠️ ${esc(b.impacto)}</span></div>¿Lo envío a revisión de CIPTEMIN?`], ['Sí, enviar', 'Corregir algo']);
     }
     if (AG.modo === 'confirmar') {
-      if (/^(si|sí|ok|dale|envia|envíalo|correcto|esta bien|perfecto)/.test(n) || n.includes('envia')) {
+      if (/^(si|ok|dale|enviar|envia|correcto|esta bien|perfecto|listo)/.test(n)) {
         const b = AG.borrador;
-        const id = crearDesafio({ titulo: b.titulo, descripcion: b.descripcion, comuna: b.comuna, mineral: b.mineral, categoria: categoriaDe(b.descripcion), impacto: b.impacto, urgencia: 'Alta', canal: 'WhatsApp', quien: 'Agente WhatsApp (por ' + USUARIOS.productor.nombre + ')' });
-        AG.modo = 'inicio'; AG.ultimo = id;
-        registrar(`Creó el desafío ${id} y lo envió a revisión de CIPTEMIN`);
-        registrar(`Programó avisos de avance para ${id}`);
-        return responder([`✅ ¡Enviado! Su desafío quedó con el número <b>${id}</b>.`, 'CIPTEMIN lo revisará en los próximos días hábiles. Yo le aviso por aquí apenas lo publiquen y cuando lleguen soluciones. No tiene que entrar a ninguna página.', '¿Le ayudo con algo más?'], ['¿Cómo va mi desafío?', 'Eso es todo, gracias']);
+        const nid = crearDesafio({ titulo: b.titulo, descripcion: b.descripcion, comuna: b.comuna, mineral: b.mineral, categoria: categoriaDe(b.descripcion), impacto: b.impacto, urgencia: 'Alta', canal: 'WhatsApp', quien: 'Agente WhatsApp (por ' + USUARIOS.productor.nombre + ')' });
+        AG.modo = 'inicio'; AG.ultimo = nid;
+        entendio('Confirmar y enviar desafío', [['Desafío', nid]]);
+        registrar(`Creó el desafío ${nid} y lo envió a revisión de CIPTEMIN`);
+        registrar(`Activó avisos automáticos de avance para ${nid}`);
+        return responder([`✅ ¡Enviado! Su desafío quedó registrado con el número *${nid}*.`, 'CIPTEMIN lo revisará en los próximos días hábiles. Yo le aviso por aquí cuando lo publiquen y cuando lleguen soluciones; no necesita entrar a ninguna página.', `Cuando quiera saber cómo va, escríbame *${nid}* y le cuento.`], ['Consultar mi desafío', 'Eso es todo, gracias']);
       }
-      AG.modo = 'problema';
-      return responder(['Claro. Cuénteme de nuevo el problema con los cambios que quiera hacer y lo vuelvo a armar.']);
+      AG.modo = 'problema'; entendio('Corregir borrador', []);
+      return responder(['Claro, sin problema. Cuénteme de nuevo el problema con los cambios y lo vuelvo a armar.']);
     }
 
-    // intenciones generales
-    if (/(persona|humano|operador|ejecutiv|alguien|hablar con)/.test(n)) {
-      registrar('Derivó la conversación a un operador de CIPTEMIN con todo el contexto');
-      return responder(['Por supuesto. Le aviso ahora a Carla, operadora de CIPTEMIN, y le paso todo lo que hemos conversado para que no tenga que repetirlo. 🙌', 'Ella le escribirá por este mismo chat en horario hábil.']);
-    }
-    if (/(problema|desafio|falla|se tapa|se me|necesito|ayuda con|mi faena|perdemos|pierdo)/.test(n) && !/(como va|estado)/.test(n)) {
-      if (/(se tapa|pierdo|perdemos|agua|chancad|polvo|energia|talud|humed)/.test(n) && n.length > 40) { AG.modo = 'problema'; return problema(t, audio); }
-      AG.modo = 'problema';
-      return responder(['Cuénteme qué está pasando en su faena, con sus palabras. Si le acomoda más, mándeme un audio 🎤.']);
-    }
-    if (/(como va|estado|avance|mi desafio|que paso con)/.test(n)) {
+    if (id || /(como va|estado|en que va|avance|consultar mi desafio|mi desafio)/.test(n)) {
+      const buscado = id ? 'GMT-' + id.padStart(4, '0') : null;
+      if (buscado) {
+        const d = des(buscado);
+        entendio('Consultar estado de un desafío', [['N.º de desafío', buscado]]);
+        if (!d) return responder([`No encuentro el desafío *${buscado}*. ¿Me confirma el número? Está en el mensaje que le enviamos cuando lo registró.`]);
+        registrar(`Consultó el estado de ${d.id}`);
+        const sig = { revision: 'CIPTEMIN lo está revisando para publicarlo.', publicado: 'La convocatoria está abierta y los proveedores pueden postular.', evaluacion: 'CIPTEMIN está evaluando las soluciones recibidas según su madurez.', pilotaje: 'La solución se está probando en terreno.', cerrado: 'El piloto terminó y los resultados ya están disponibles.' }[d.estado] || '';
+        const extra = d.estado === 'evaluacion' ? `\n\nSoluciones en estudio:\n${(D.evaluaciones[d.id] || []).map((e) => `• ${sol(e.sol).nombre} (TRL ${sol(e.sol).trl})`).join('\n')}` : '';
+        return responder([`📋 *${d.id}* · ${esc(d.titulo)}\n\nEstado: *${ESTADOS[d.estado].t}*\n${sig}${extra}`, 'Le aviso por aquí apenas haya un cambio. ¿Necesita algo más?'], ['¿Qué significa TRL?', 'Hablar con una persona']);
+      }
       const mios = D.desafios.filter((d) => d.autor === 'productor').slice(0, 3);
+      entendio('Consultar estado de sus desafíos', [['Desafíos encontrados', String(mios.length)]]);
       registrar('Consultó el estado de los desafíos del productor');
-      return responder(['Le cuento cómo van sus desafíos:', mios.map((d) => `• <b>${d.id}</b> ${esc(d.titulo)}<br>   ➜ ${ESTADOS[d.estado].t}${d.estado === 'evaluacion' ? ' (3 soluciones en estudio)' : ''}`).join('<br>'), '¿Quiere que le explique en qué consiste la etapa en que está alguno?'], ['¿Qué significa TRL?', 'Tengo un problema en mi faena']);
+      return responder(['Estos son sus desafíos:\n\n' + mios.map((d) => `• *${d.id}* ${esc(d.titulo)}\n   ${ESTADOS[d.estado].t}`).join('\n\n'), 'Si quiere el detalle de alguno, escríbame su número (por ejemplo, GMT-0042).']);
     }
-    if (/(que es greenmine|que es esto|como funciona|que hacen|para que sirve)/.test(n)) {
-      return responder(['GreenMineTech es un programa de CIPTEMIN, apoyado por CORFO, que conecta los problemas de las faenas con empresas que tienen soluciones tecnológicas. 🤝', 'Funciona en 6 pasos: usted cuenta su problema, se abre una convocatoria, se evalúan las soluciones, CIPTEMIN le propone las mejores, se prueba una en su faena y al final usted decide si la adopta.', 'Publicar su desafío no tiene costo. ¿Quiere contarme un problema de su faena?'], ['Tengo un problema en mi faena']);
+
+    const metal = ['cobre', 'oro', 'plata', 'hierro'].find((m) => new RegExp('\\b' + m + '\\b').test(n));
+    if (/(precio|cotiza|a cuanto|cuanto esta|valor|vale|cuanto paga)/.test(n) && (metal || /metal/.test(n)) || (AG.modo === 'inicio' && /^precio de metales$/.test(n))) {
+      entendio('Consultar precio de metales', [['Metal', metal ? PRECIOS[metal].n : 'Todos']]);
+      registrar(`Consultó la cotización del ${metal ? PRECIOS[metal].n.toLowerCase() : 'cobre, oro, plata y hierro'}`);
+      const lista = metal ? [metal] : ['cobre', 'oro', 'plata', 'hierro'];
+      const txt = lista.map((m) => { const p = PRECIOS[m]; return `*${p.n}:* ${p.v} ${p.u} (${p.var} respecto de ayer)`; }).join('\n');
+      return responder([`📈 Cotización de hoy:\n\n${txt}\n\n<span class="w-fuente">Referencia: ${metal ? PRECIOS[metal].ref : 'LME y LBMA'}, publicada por Cochilco. Valores de ejemplo en este prototipo.</span>`,
+        metal === 'cobre' ? 'Ojo: lo que recibe al vender depende además de la ley de su mineral y de la tarifa del poder comprador. ¿Quiere que le explique cómo se calcula?' : '¿Le ayudo con algo más?'], metal === 'cobre' ? ['Sí, explícame', '¿Dónde puedo vender?'] : ['Precio del cobre', 'Contar un problema']);
+    }
+    if (/(explicame|como se calcula)/.test(n)) {
+      entendio('Orientación comercial', []);
+      return responder(['En simple: el comprador paga según el *contenido de cobre* de su mineral (la ley), el *precio del cobre* del período y descuenta los *costos de tratamiento*. Por eso dos camiones del mismo peso pueden pagarse distinto.', 'Si quiere, le paso con una persona de CIPTEMIN para revisar su caso.'], ['Hablar con una persona', 'Eso es todo, gracias']);
+    }
+    if (/(vender|venta|poder comprador|comprador|enami|tarifa)/.test(n)) {
+      entendio('Orientación comercial · venta de mineral', []);
+      registrar('Entregó orientación sobre venta de mineral');
+      return responder(['Los pequeños productores pueden vender su mineral a los *poderes compradores* y plantas de ENAMI, y también a compradores privados. El pago depende de la ley del mineral, el precio del metal y la tarifa vigente.', 'Le recomiendo confirmar requisitos y tarifas directamente con el poder comprador más cercano. ¿Quiere que le pase con una persona de CIPTEMIN para orientarlo?'], ['Hablar con una persona', 'Contar un problema']);
+    }
+    if (/(segur|accidente|sernageomin|riesgo|permiso|normativa|fiscaliz)/.test(n)) {
+      entendio('Orientación en seguridad minera', []);
+      registrar('Entregó orientación en seguridad y ofreció formular un desafío');
+      return responder(['La seguridad es lo primero. 🦺 Para permisos, normativa y fiscalización, el organismo a cargo es *Sernageomin*.', 'Si tiene un riesgo concreto en su faena, como taludes, ventilación o polvo, lo podemos convertir en un desafío para buscar tecnología que lo resuelva. ¿Me cuenta qué está pasando?'], ['Contar un problema', 'Hablar con una persona']);
+    }
+    if (/(persona|humano|operador|ejecutiv|alguien|hablar con)/.test(n)) {
+      entendio('Derivar a una persona', [['Operadora', 'Carla Pizarro (CIPTEMIN)']]);
+      registrar('Derivó la conversación a una operadora de CIPTEMIN con todo el contexto');
+      return responder(['Por supuesto. Le aviso ahora a *Carla Pizarro*, operadora de CIPTEMIN, y le paso todo lo que hemos conversado para que no tenga que repetirlo. 🙌', 'Ella le escribirá por este mismo chat en horario hábil.']);
+    }
+    if (/(problema|desafio|falla|se tapa|se me|necesito|ayuda con|mi faena|perdemos|pierdo|contar un problema)/.test(n)) {
+      if (/(se tapa|pierdo|perdemos|agua|chancad|polvo|energia|talud|humed)/.test(n) && n.length > 40) { AG.modo = 'problema'; return problema(t, audio); }
+      AG.modo = 'problema'; entendio('Formular un desafío nuevo', []);
+      return responder(['Cuénteme qué está pasando en su faena, con sus palabras. Si prefiere, mándeme un audio 🎤.']);
+    }
+    if (/(que es greenmine|que es esto|como funciona|que hacen|para que sirve|ciptemin)/.test(n)) {
+      entendio('Información del programa', []);
+      return responder(['*GreenMineTech* es un programa de CIPTEMIN, apoyado por CORFO, que conecta los problemas de las faenas con empresas que tienen soluciones tecnológicas. 🤝', 'Funciona en pocos pasos: usted cuenta su problema, se abre una convocatoria, se evalúan las soluciones, CIPTEMIN le propone las mejores, se prueba una en su faena y usted decide si la adopta.'], ['Contar un problema', 'Consultar mi desafío']);
     }
     if (/trl/.test(n)) {
-      return responder(['El TRL es el nivel de madurez de una tecnología, del 1 al 9. 📈', 'Un TRL 9 ya funciona en faenas reales; un TRL 6 o 7 está probado, pero todavía en etapa de prueba. CIPTEMIN revisa ese nivel antes de proponerle una solución, para que no corra riesgos innecesarios.']);
+      entendio('Explicar concepto', [['Concepto', 'TRL']]);
+      return responder(['El *TRL* es el nivel de madurez de una tecnología, del 1 al 9. 📈', 'Un TRL 9 ya funciona en faenas reales; un TRL 6 o 7 está probado, pero en etapa de prueba. CIPTEMIN revisa ese nivel antes de proponerle una solución, para que no corra riesgos innecesarios.']);
     }
-    if (/^(hola|buenas|buenos|alo|hey)/.test(n)) return saludar();
-    if (/(gracias|eso es todo|chao|adios)/.test(n)) return responder(['¡Con gusto, don Luis! Aquí estaré cuando me necesite, a cualquier hora. Que le vaya bien en la faena. ⛏️']);
-    // fuera de ámbito
-    registrar('Mantuvo la conversación dentro de su ámbito (pregunta fuera del programa)');
-    return responder(['Esa pregunta se sale de lo que puedo responder: estoy aquí para ayudarle con GreenMineTech, sus desafíos y sus pilotos. 🙂', '¿Le ayudo con alguna de estas cosas?'], ['Tengo un problema en mi faena', '¿Cómo va mi desafío?', 'Quiero hablar con una persona']);
+    if (/^(hola|buenas|buenos|buen dia|alo|hey)/.test(n)) { entendio('Saludo', []); return saludar(); }
+    if (/(gracias|eso es todo|chao|adios|hasta luego)/.test(n)) { entendio('Despedida', []); return responder(['¡Con gusto, don Luis! Aquí estaré cuando me necesite, a cualquier hora. Que le vaya bien en la faena. ⛏️']); }
+    entendio('Fuera del ámbito del agente', []);
+    registrar('Mantuvo la conversación dentro de su ámbito');
+    return responder(['Disculpe, en eso no le puedo ayudar: estoy para apoyarlo en su faena, sus desafíos, sus pilotos y temas de la minería, como precios de metales o venta de mineral. 🙂'], ['Contar un problema', 'Consultar mi desafío', 'Precio de metales']);
+  }
+  function problema(t, audio) {
+    AG.borrador = { descripcion: t, titulo: resumirTitulo(t) };
+    AG.modo = 'comuna';
+    entendio('Formular desafío · problema', [['Problema', AG.borrador.titulo], ['Categoría sugerida', categoriaDe(t)]]);
+    return responder([`${audio ? 'Escuché su audio. ' : ''}Le entendí: _${esc(t.length > 140 ? t.slice(0, 140) + '…' : t)}_`, 'Es un problema que tienen varias faenas y hay tecnologías que se pueden probar. Para armar bien su desafío, ¿en qué comuna está su faena?'], ['Diego de Almagro', 'Tierra Amarilla', 'Andacollo']);
   }
   function resumirTitulo(t) {
     const n = N(t);
@@ -493,8 +562,12 @@
   if (Q.get('reiniciar')) { D = JSON.parse(JSON.stringify(DATOS_BASE)); guardar(); }
   window.addEventListener('hashchange', ruta);
   ruta();
-  if (Q.get('demo') === 'chat' && location.hash === '#/whatsapp') {
-    const guion = [['Tengo un problema en mi faena', 0], ['__audio', 0], ['Diego de Almagro', 0], ['Cobre', 0], ['Pierdo horas de turno', 0], ['Sí, envíalo', 0]];
+  if (Q.get('demo') && location.hash === '#/whatsapp') {
+    const guiones = {
+      chat: [['Tengo un problema en mi faena'], ['__audio'], ['Diego de Almagro'], ['Cobre'], ['Pierdo horas de turno'], ['Sí, enviar']],
+      cobre: [['¿A cuánto está el cobre hoy?'], ['Sí, explícame'], ['¿Cómo va el GMT-0042?']],
+    };
+    const guion = guiones[Q.get('demo')] || guiones.chat;
     let k = 0;
     const paso = () => { if (k >= guion.length) return; const [m] = guion[k++]; if (m === '__audio') $('#w-audio').click(); else recibir(m); setTimeout(paso, 5200); };
     setTimeout(paso, 3800);
