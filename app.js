@@ -418,7 +418,7 @@
     const siguiente = () => {
       if (mio !== turnoEscena) return;
       if (AG.ocupado) { setTimeout(siguiente, 300); return; }
-      if (k >= e.pasos.length) { explicar(e.pasos.length, e.pasos.length, e.pasos[e.pasos.length - 1][1] + ' <span class="exp-fin">Puedes elegir otra situación a la izquierda.</span>'); return; }
+      if (k >= e.pasos.length) { explicar(e.pasos.length, e.pasos.length, e.pasos[e.pasos.length - 1][1] + ' <span class="exp-fin">Puedes elegir otra situación cuando quieras.</span>'); return; }
       const [m, txt] = e.pasos[k++];
       explicar(k, e.pasos.length, txt);
       setTimeout(() => { if (mio !== turnoEscena) return; if (m === '__audio') recibir(AUDIO_EJ, true); else recibir(m); setTimeout(siguiente, 1600); }, 1100);
@@ -494,7 +494,7 @@
           <div class="exp-reg"><b>Quedó registrado en la plataforma</b><ul class="acciones-ag" id="w-acc"></ul></div></div>
       </div>`, true);
     limpiarChat();
-    explicar(0, 0, 'Elige una situación a la izquierda para ver una conversación completa entre un productor y el agente.');
+    explicar(0, 0, 'Elige una situación para ver una conversación completa entre un productor y el agente.');
     pintarAcciones();
     app.querySelectorAll('[data-esc]').forEach((b) => b.addEventListener('click', () => correrEscena(b.dataset.esc)));
     $('#ver-intro').addEventListener('click', () => { turnoEscena++; introAgente(); });

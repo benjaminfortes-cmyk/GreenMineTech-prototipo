@@ -353,3 +353,53 @@ body.contraste .lat{background:#000}
 
 .pub-main{max-width:1240px;margin:0 auto;padding:32px 28px 64px}
 @media (max-width:640px){.pub-main{padding:24px 16px 48px}.main{padding:22px 16px 48px}}
+
+@media (max-width:900px){
+  .cab-pub .in{flex-wrap:wrap;height:auto;padding:10px 16px;row-gap:6px}
+  .cab-pub nav{display:flex;order:3;width:100%;margin:0;gap:18px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
+  .cab-pub nav a{white-space:nowrap;font-size:.86rem}
+  .app{display:block}
+  .lat{position:sticky;top:0;z-index:30;height:auto;flex-direction:row;align-items:center;gap:4px;padding:8px 12px;overflow-x:auto;scrollbar-width:none}
+  .lat .logo{border:0;padding:0 8px 0 0;margin:0;flex:none}
+  .lat .logo img{height:26px}
+  .lat .sep{display:none}
+  .lat a{white-space:nowrap;padding:7px 10px;font-size:.82rem;flex:none}
+  .lat a svg{width:16px;height:16px}
+  .lat .yo{margin:0 0 0 6px;border:0;padding:0;flex:none}
+  .lat .yo .av,.lat .yo b{display:none}
+  .lat .yo div{font-size:0}
+  .lat .yo a{font-size:.78rem;color:#C9EE9C;padding:7px 8px;border:1px solid #2F5A37;border-radius:8px}
+  .main{padding:20px 16px 48px}
+  .top{gap:12px}
+  .top>div:last-child,.top>a,.top>button{flex-wrap:wrap}
+  .top h1{font-size:1.35rem}
+  .kpis{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{padding:12px 14px}.kpi b{font-size:1.35rem}
+  .card:has(> .tabla){overflow-x:auto}
+  .tabla{min-width:0}
+  .tabla:has(th:nth-child(4)){min-width:560px}
+  .tabla th,.tabla td{padding:9px 10px}
+  .card div[style*="grid-template-columns:200px"]{grid-template-columns:118px 1fr 34px!important;gap:8px!important;font-size:.86rem}
+  .comp,.perfiles,.opciones,.intro-dos{grid-template-columns:1fr}
+  .linea-est div{font-size:0;padding-top:20px}
+  .linea-est div.ahora{font-size:.72rem}
+  .sim3{display:flex;flex-direction:column;gap:18px}
+  .escenas{order:1}.explica{order:2}.telefono{order:3}
+  .telefono{width:100%;max-width:360px;height:620px;margin:0 auto;border-radius:38px;padding:10px}
+  .pantalla{border-radius:30px}
+  .exp-caja{min-height:0;padding:16px 18px}
+  .exp-caja p{font-size:1rem}
+  .intro-ag h1{font-size:1.45rem}
+  .intro-pie .btn{width:100%}
+  .wiz-pie .btn{flex:1}
+  .wiz-pie{gap:10px}
+  .pie .in{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:480px){
+  .intro-grid{grid-template-columns:1fr}
+  .grid3{grid-template-columns:1fr}
+  .hero h1{font-size:1.75rem}
+  .mapa-cl{height:250px}
+  .pasos-p1 .n1{font-size:1.9rem}
+  .esc b{font-size:.92rem}
+}
