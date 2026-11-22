@@ -135,7 +135,7 @@
   
   function panelProductor() {
     const mios = D.desafios.filter((d) => d.autor === 'productor');
-    vista('#/p', `<div class="top"><div><h1>Hola, ${USUARIOS.productor.nombre.split(' ')[0]} 👋</h1><p>${USUARIOS.productor.org} · ${USUARIOS.productor.detalle}</p></div>
+    vista('#/p', `<div class="top"><div><h1>Hola, ${USUARIOS.productor.nombre.split(' ')[0]}</h1><p>${USUARIOS.productor.org} · ${USUARIOS.productor.detalle}</p></div>
       <div style="display:flex;gap:10px"><a class="btn b-wsp" href="#/whatsapp">${ICO.wsp.replace('<svg', '<svg fill="none" stroke="currentColor" stroke-width="2"')}Hablar con el agente</a><a class="btn b-verde" href="#/p/nuevo">Nuevo desafío</a></div></div>
       <div class="kpis"><div class="card kpi"><b>${mios.length}</b><span>desafíos publicados por ti</span></div><div class="card kpi"><b>${mios.filter((d) => d.estado === 'evaluacion').length}</b><span>en evaluación</span></div>
       <div class="card kpi"><b>3</b><span>soluciones en estudio</span></div><div class="card kpi"><b>${mios.filter((d) => d.canal === 'WhatsApp').length}</b><span>creados por WhatsApp</span></div></div>
@@ -386,8 +386,54 @@
     setTimeout(siguiente, 400);
   }
 
+  const IC_AG = {
+    desafio: '<path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/>',
+    estado: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+    aviso: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
+    foto: '<rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/>',
+    hito: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+    encuesta: '<path d="M9 5h11M9 12h11M9 19h11"/><path d="M4 5l1 1 2-2M4 12l1 1 2-2M4 19l1 1 2-2"/>',
+    precio: '<path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/>',
+    persona: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/>',
+  };
+  function introAgente() {
+    const items = [
+      ['desafio', 'Publicar su desafío', 'Cuenta el problema por texto o audio y el agente lo deja listo para revisión.'],
+      ['estado', 'Consultar cómo va', 'Escribe el número de su desafío y recibe el estado y el siguiente paso.'],
+      ['aviso', 'Recibir avisos', 'Le llega un mensaje cuando su desafío avanza o llegan soluciones.'],
+      ['foto', 'Enviar fotos y documentos', 'Manda fotos, videos o archivos de su faena directo al chat.'],
+      ['hito', 'Seguir su piloto', 'Confirma hitos, reporta incidencias y ve los resultados de la prueba.'],
+      ['encuesta', 'Responder encuestas', 'Califica el servicio y los resultados en pocos toques.'],
+      ['precio', 'Consultar precios y venta', 'Precio de metales del día y orientación para vender su mineral.'],
+      ['persona', 'Hablar con una persona', 'Cuando lo necesita, el agente lo traspasa a CIPTEMIN con todo el contexto.'],
+    ];
+    vista('#/whatsapp', `<div class="intro-ag">
+      <h1>Todo GreenMineTech, desde el WhatsApp del productor</h1>
+      <p class="intro-lead">El productor minero ya usa WhatsApp todos los días. Por eso puede hacer casi todo su recorrido en GreenMineTech desde ahí: sin descargar nada, sin contraseñas y sin aprender una plataforma nueva. La plataforma se adapta a él, no al revés.</p>
+      <h2>Lo que el productor puede hacer por WhatsApp</h2>
+      <div class="intro-grid">${items.map(([k, t, s]) => `<div class="intro-it"><svg viewBox="0 0 24 24">${IC_AG[k]}</svg><div><b>${t}</b><span>${s}</span></div></div>`).join('')}</div>
+      <div class="intro-dos"><div><h2>Cómo funciona</h2><ol class="intro-pasos">
+        <li><b>El productor escribe o manda un audio</b>, con sus palabras, a cualquier hora.</li>
+        <li><b>El agente entiende y pregunta lo necesario.</b> Está entrenado por SETROF con el conocimiento de GreenMineTech y de la pequeña minería.</li>
+        <li><b>Hace la gestión en la plataforma</b> y CIPTEMIN la ve al instante, con todo registrado.</li></ol></div>
+      <div><h2>Con límites claros</h2><ul class="intro-lim">
+        <li>Responde solo sobre el programa y temas de la minería.</li>
+        <li>Nunca publica nada sin la confirmación del productor.</li>
+        <li>Las decisiones, como evaluar y elegir soluciones, las toma CIPTEMIN.</li>
+        <li>La primera vez, el productor verifica su identidad con su RUT y un código.</li></ul></div></div>
+      <div class="intro-pie"><p>A continuación verás una demostración con conversaciones de ejemplo.</p><button class="btn b-verde b-grande" id="intro-ok">Continuar a la demostración →</button></div>
+    </div>`, !!rol);
+    $('#intro-ok').addEventListener('click', () => { try { sessionStorage.setItem('gmt-intro-ag', '1'); } catch (e) {} simulador(); });
+  }
+  function rutaAgente() {
+    let visto = false;
+    try { visto = sessionStorage.getItem('gmt-intro-ag') === '1'; } catch (e) { visto = false; }
+    if (visto || new URLSearchParams(location.search).get('demo')) return simulador();
+    return introAgente();
+  }
+
   function simulador() {
-    vista('#/whatsapp', `<div class="top"><div><h1>Así conversa un productor con el agente</h1><p>El agente de GreenMineTech atiende por WhatsApp a toda hora. Elige una situación y mira la conversación completa.</p></div></div>
+    vista('#/whatsapp', `<div class="top"><div><h1>Así conversa un productor con el agente</h1><p>El agente de GreenMineTech atiende por WhatsApp a toda hora. Elige una situación y mira la conversación completa.</p></div><button class="btn b-gris b-chico" id="ver-intro">Volver a la explicación</button></div>
       <div class="sim3">
         <div class="escenas"><b class="esc-tit">Elige una situación</b>
           ${Object.entries(ESCENAS).map(([k, e], i) => `<button class="esc" data-esc="${k}"><span class="esc-n">${i + 1}</span><span><b>${e.t}</b><small>${e.s}</small></span></button>`).join('')}
@@ -409,6 +455,7 @@
     $('#w-form').addEventListener('submit', (e) => { e.preventDefault(); const t = $('#w-txt').value.trim(); if (!t) return; $('#w-txt').value = ''; turnoEscena++; explicar(0, 0, 'Estás conversando tú con el agente.'); recibir(t); });
     $('#w-audio').addEventListener('click', () => { turnoEscena++; recibir(AUDIO_EJ, true); });
     app.querySelectorAll('[data-esc]').forEach((b) => b.addEventListener('click', () => correrEscena(b.dataset.esc)));
+    $('#ver-intro').addEventListener('click', () => { turnoEscena++; introAgente(); });
     saludar();
   }
   function pintarAcciones() {
@@ -590,7 +637,7 @@
       case 'soluciones': return catalogo();
       case 'desafio': return detalle(p[1]);
       case 'pilotaje': return pilotaje(p[1]);
-      case 'whatsapp': return simulador();
+      case 'whatsapp': return rutaAgente();
       case 'p': if (!exige('productor')) return; return p[1] === 'nuevo' ? nuevoDesafio() : p[1] === 'desafios' ? misDesafios() : panelProductor();
       case 'v': if (!exige('proveedor')) return; return p[1] === 'soluciones' ? misSoluciones() : panelProveedor();
       case 'o': if (!exige('operador')) return;
