@@ -72,8 +72,11 @@
   }
   
   function tarjetaDesafio(d) {
-    return `<a class="card desafio-c" href="#/desafio/${d.id}"><div class="fila-sb">${est(d.estado)}<span class="canal">${d.canal === 'WhatsApp' ? 'vía WhatsApp' : 'vía web'}</span></div>
-      <h3>${esc(d.titulo)}</h3><span class="meta">${d.id} · ${d.comuna}, ${d.region} · ${d.mineral}</span></a>`;
+    const n = ORDEN_ESTADOS.indexOf(d.estado) + 1;
+    const seg = Array.from({ length: 6 }, (_, k) => `<i class="${k < n ? 'on' : ''}"></i>`).join('');
+    const origen = d.canal === 'WhatsApp' ? `<span class="orig"><span class="wsp-mini">${WSP_SVG}</span>Llegó por WhatsApp</span>` : '<span class="orig">Publicado en la web</span>';
+    return `<a class="card desafio-f2 ${ESTADOS[d.estado].c}" href="#/desafio/${d.id}"><b class="est-g">${ESTADOS[d.estado].t}</b><div class="seg" title="Paso ${n} de 6">${seg}</div>
+      <h3>${esc(d.titulo)}</h3><span class="meta">${d.id} · ${d.comuna}, ${d.region} · ${d.mineral}</span><div class="pie-f2">${origen}</div></a>`;
   }
   function mapaSvg() {
     const M = MAPA_CHILE, w = M.ancho;
@@ -85,23 +88,22 @@
       <text x="${w + 32}" y="${M.y_coquimbo - 2}" font-size="17" font-weight="700" fill="#173A1F" font-family="Montserrat,sans-serif">Coquimbo</text><text x="${w + 32}" y="${M.y_coquimbo + 17}" font-size="13" fill="#56615B">Región piloto</text></svg>`;
   }
   function inicio() {
-    const abiertos = D.desafios.filter((d) => ['publicado', 'evaluacion', 'pilotaje'].includes(d.estado)).slice(0, 3);
+    const abiertos = ['publicado', 'evaluacion', 'pilotaje'].map((e) => D.desafios.find((d) => d.estado === e)).filter(Boolean);
     vista('#/', `
       <section class="hero"><div class="in"><div class="hero-txt">
         <h1>Tecnología <span class="marcado">probada<svg viewBox="0 0 200 18" preserveAspectRatio="none" aria-hidden="true"><path d="M3 12 C 50 4, 120 3, 197 9" fill="none" stroke="#86C43F" stroke-width="7" stroke-linecap="round"/></svg></span> para la pequeña y mediana minería</h1>
-        <p>Publica el problema de tu faena y te conectamos con proveedores tecnológicos para probar la solución en terreno, con el acompañamiento de CIPTEMIN.</p>
+        <p>Te conectamos con proveedores tecnológicos para probar soluciones en tu faena, con el acompañamiento de CIPTEMIN.</p>
         <div class="ctas"><a class="btn b-verde b-grande" href="#/ingresar">Publicar un desafío</a><a class="btn b-linea b-grande" href="#/ingresar">Registrar una solución</a></div>
-        <a class="btn b-wsp b-grande" href="#/whatsapp"><span class="ico-w">${WSP_SVG}</span>Cuéntanos tu desafío por WhatsApp</a>
-        <p class="sub-w">Con el mismo WhatsApp <b>consultas en qué va tu desafío</b>, cuando quieras.</p>
+        <a class="btn b-wsp b-grande" href="#/whatsapp"><span class="ico-w">${WSP_SVG}</span>Cuéntanos o consulta tu desafío por WhatsApp</a>
       </div><div class="hero-mapa">${mapaSvg()}</div></div>
-      <div class="pasos4"><div><b>1. Cuenta tu desafío</b>en la web o por WhatsApp</div><div><b>2. Recibe soluciones</b>evaluadas por su madurez</div><div><b>3. Pilotea en faena</b>con objetivos y KPIs</div><div><b>4. Decide con datos</b>y adopta la tecnología</div></div>
+      <div class="pasos-p1"><div><span class="n1">1</span><b>Cuenta tu desafío</b><span>en la web o por WhatsApp</span></div><span class="flecha">→</span><div><span class="n1">2</span><b>Recibe soluciones</b><span>evaluadas por su madurez</span></div><span class="flecha">→</span><div><span class="n1">3</span><b>Pilotea en faena</b><span>con objetivos y KPIs</span></div><span class="flecha">→</span><div><span class="n1">4</span><b>Decide con datos</b><span>y adopta la tecnología</span></div></div>
       </section>
       <section class="sec"><h2>Problemas reales que buscan solución</h2>
         <div class="grid3">${abiertos.map(tarjetaDesafio).join('')}</div>
         <p style="margin-top:16px"><a href="#/desafios">Ver todos los desafíos →</a></p></section>`);
   }
   function listaPublica() {
-    const lista = D.desafios.filter((d) => d.estado !== 'borrador' && d.estado !== 'revision');
+    const lista = D.desafios.filter((d) => d.estado !== 'borrador' && d.estado !== 'revision').sort((x, y) => ORDEN_ESTADOS.indexOf(x.estado) - ORDEN_ESTADOS.indexOf(y.estado));
     const html = `<div class="top"><div><h1>Desafíos</h1><p>Convocatorias abiertas y desafíos en curso de la pequeña y mediana minería.</p></div></div>
       <div class="grid3">${lista.map(tarjetaDesafio).join('')}</div>`;
     if (rol) vista('#/desafios', html, true); else vista('#/desafios', `<section class="sec">${html}</section>`);
@@ -334,40 +336,84 @@
     hierro: { n: 'Hierro (62 % Fe)', v: 'US$ 104', u: 'por tonelada', var: '−1,1 %', ref: 'índice de referencia del mineral de hierro' },
   };
   function registrar(t) { D.registro_agente.unshift([hora(), t]); guardar(); pintarAcciones(); }
-  function entendio(intencion, datos) {
-    const el = $('#w-nlu'); if (!el) return;
-    el.innerHTML = `<div class="nlu-int">${intencion}</div>${datos.length ? `<div class="nlu-datos">${datos.map(([k, v]) => `<span><b>${k}:</b> ${esc(v)}</span>`).join('')}</div>` : '<p class="nlu-vacio">Sin datos adicionales en el mensaje.</p>'}`;
+  function entendio(intencion) {
+    const el = $('#w-ent'); if (el) el.innerHTML = intencion && intencion !== '—' ? `El agente entendió: <b>${esc(intencion)}</b>` : '';
   }
   const VERIF = '<svg viewBox="0 0 24 24" class="verif"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.2 15.8l.9-2.9-.9-2.9 2.5-1.7.9-2.9 3 .2z" fill="#25D366"/><path d="M8 12.3l2.6 2.6L16.2 9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const AUDIO_EJ = 'la chancadora se me tapa cuando el mineral viene húmedo, sobre todo en invierno, y pierdo como medio turno';
+  const ESCENAS = {
+    problema: { t: 'Contar un problema de la faena', s: 'Por audio, sin formularios', pasos: [
+      ['Hola, buenas tardes', 'El productor escribe como le escribiría a cualquier persona. El agente responde al instante, a cualquier hora del día.'],
+      ['__audio', 'Prefiere mandar un audio. El agente lo transcribe y entiende cuál es el problema.'],
+      ['Diego de Almagro', 'El agente pregunta solo lo que falta para armar el desafío: dónde está la faena…'],
+      ['Cobre', '…qué mineral trabaja…'],
+      ['Pierdo horas de turno', '…y cuánto le afecta. Con eso arma el desafío y se lo muestra para que lo revise.'],
+      ['Sí, enviar', 'Con la confirmación del productor, el desafío queda creado en la plataforma y llega a CIPTEMIN para su revisión. El productor no tuvo que entrar a ninguna página.']] },
+    consulta: { t: 'Consultar cómo va su desafío', s: 'Con el número del desafío', pasos: [
+      ['¿Cómo va el GMT-0042?', 'El productor escribe el número de su desafío. El agente lo busca en la plataforma y responde con el estado real y las soluciones en estudio.'],
+      ['¿Qué significa TRL?', 'Si no entiende un término, pregunta. El agente lo explica en palabras simples.']] },
+    cobre: { t: 'Preguntar el precio del cobre', s: 'Ayuda en el día a día', pasos: [
+      ['¿A cuánto está el cobre hoy?', 'El agente también ayuda en el día a día del minero: entrega la cotización del día desde fuentes oficiales.'],
+      ['Sí, explícame', 'Explica en simple cómo se calcula el pago al vender mineral.'],
+      ['¿Dónde puedo vender mi mineral?', 'Orienta sobre dónde vender y, si hace falta, ofrece pasar con una persona.']] },
+    persona: { t: 'Pedir hablar con una persona', s: 'Y lo que el agente no responde', pasos: [
+      ['Tengo dudas con el piloto, quiero hablar con una persona', 'Cuando el tema lo requiere, el agente traspasa la conversación a una operadora de CIPTEMIN con todo el contexto.'],
+      ['¿Quién ganó el partido ayer?', 'Si le preguntan algo fuera de su ámbito, lo dice con amabilidad y vuelve a lo que sí puede ayudar.']] },
+  };
+  let turnoEscena = 0;
+  function limpiarChat() {
+    const c = $('#w-chat'); if (!c) return;
+    c.innerHTML = '<span class="w-fecha">Hoy</span><div class="w-cifrado">🔒 Cuenta de empresa de GreenMineTech, operada por CIPTEMIN. Los mensajes están protegidos.</div>';
+    AG.modo = 'inicio'; AG.borrador = {}; entendio('');
+  }
+  function explicar(n, total, texto) {
+    const el = $('#w-exp'); if (!el) return;
+    el.innerHTML = `<span class="exp-paso">${total ? `Paso ${n} de ${total}` : 'Conversación libre'}</span><p>${texto}</p>`;
+  }
+  function correrEscena(clave) {
+    const e = ESCENAS[clave]; const mio = ++turnoEscena;
+    app.querySelectorAll('[data-esc]').forEach((b) => b.classList.toggle('act', b.dataset.esc === clave));
+    limpiarChat(); explicar(0, e.pasos.length, 'Mira la conversación: avanza sola.');
+    let k = 0;
+    const siguiente = () => {
+      if (mio !== turnoEscena) return;
+      if (AG.ocupado) { setTimeout(siguiente, 300); return; }
+      if (k >= e.pasos.length) { explicar(e.pasos.length, e.pasos.length, e.pasos[e.pasos.length - 1][1] + ' <span class="exp-fin">Puedes elegir otra situación o escribirle tú.</span>'); return; }
+      const [m, txt] = e.pasos[k++];
+      explicar(k, e.pasos.length, txt);
+      setTimeout(() => { if (mio !== turnoEscena) return; if (m === '__audio') recibir(AUDIO_EJ, true); else recibir(m); setTimeout(siguiente, 1600); }, 1100);
+    };
+    setTimeout(siguiente, 400);
+  }
 
   function simulador() {
-    vista('#/whatsapp', `<div class="top"><div><h1>Agente GreenMineTech por WhatsApp</h1><p>Simulación del agente con inteligencia artificial. Acompaña al productor las 24 horas, lo orienta en lo que necesita y hace gestiones por él dentro de la plataforma.</p></div></div>
-      <div class="sim"><div class="telefono"><div class="pantalla">
-        <div class="w-barra"><span>9:41</span><span class="w-ic-est">▮▮▮ 5G ▭</span></div>
-        <div class="w-cab"><svg class="w-atras" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span class="av"><img src="img/greenminetech-logo.png" alt=""></span><div class="w-nom"><b>GreenMineTech ${VERIF}</b><small id="w-estado">Cuenta de empresa</small></div></div>
-        <div class="w-chat" id="w-chat"><span class="w-fecha">Hoy</span><div class="w-cifrado">🔒 Los mensajes están protegidos. Esta es una cuenta de empresa de GreenMineTech, operada por CIPTEMIN.</div></div>
-        <form class="w-input" id="w-form"><div class="w-caja"><input id="w-txt" placeholder="Mensaje" autocomplete="off"></div>
-          <button type="button" id="w-audio" title="Enviar un audio de ejemplo"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg></button></form>
-      </div></div>
-      <div class="panel-ag">
-        <div class="card card-p"><h2>Qué entendió el agente</h2><p class="pa-sub">Intención y datos que el agente extrae de cada mensaje, aunque el productor escriba con sus propias palabras.</p><div id="w-nlu" class="nlu"><p class="nlu-vacio">Escribe un mensaje para ver cómo lo interpreta.</p></div></div>
-        <div class="card card-p" style="margin-top:16px"><h2>Gestiones en la plataforma</h2><p class="pa-sub">Cada acción queda registrada y la ve el operador de CIPTEMIN.</p><ul class="acciones-ag" id="w-acc"></ul></div>
-        <div class="card card-p" style="margin-top:16px"><h3 style="margin-bottom:8px">Prueba con estos mensajes</h3>
-          <div class="prueba">${['Tengo un problema en mi faena', '¿Cómo va el GMT-0042?', '¿A cuánto está el cobre hoy?', '¿Dónde puedo vender mi mineral?', 'Necesito ayuda con seguridad en la faena', '¿Qué es GreenMineTech?', 'Quiero hablar con una persona', '¿Quién ganó el partido ayer?'].map((t) => `<button data-p="${t}">${t}</button>`).join('')}</div>
-          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn b-gris b-chico" id="w-reset">Reiniciar conversación</button>${rol ? '' : '<a class="btn b-linea b-chico" href="#/ingresar">Ver la plataforma</a>'}</div></div>
-      </div></div>`, !!rol);
-    AG.modo = 'inicio'; AG.borrador = {};
+    vista('#/whatsapp', `<div class="top"><div><h1>Así conversa un productor con el agente</h1><p>El agente de GreenMineTech atiende por WhatsApp a toda hora. Elige una situación y mira la conversación completa.</p></div></div>
+      <div class="sim3">
+        <div class="escenas"><b class="esc-tit">Elige una situación</b>
+          ${Object.entries(ESCENAS).map(([k, e], i) => `<button class="esc" data-esc="${k}"><span class="esc-n">${i + 1}</span><span><b>${e.t}</b><small>${e.s}</small></span></button>`).join('')}
+          <p class="esc-nota">También puedes escribirle tú directamente en el teléfono.</p></div>
+        <div class="telefono"><div class="pantalla">
+          <div class="w-barra"><span>9:41</span><span>5G ▮▮▮</span></div>
+          <div class="w-cab"><svg class="w-atras" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="av"><img src="img/greenminetech-logo.png" alt=""></span><div class="w-nom"><b>GreenMineTech ${VERIF}</b><small id="w-estado">en línea</small></div></div>
+          <div class="w-chat" id="w-chat"></div>
+          <form class="w-input" id="w-form"><div class="w-caja"><input id="w-txt" placeholder="Mensaje" autocomplete="off"></div>
+            <button type="button" id="w-audio" title="Enviar un audio de ejemplo"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg></button></form>
+        </div></div>
+        <div class="explica"><div class="exp-caja" id="w-exp"></div><p class="exp-ent" id="w-ent"></p>
+          <div class="exp-reg"><b>Quedó registrado en la plataforma</b><ul class="acciones-ag" id="w-acc"></ul></div></div>
+      </div>`, !!rol);
+    limpiarChat();
+    explicar(0, 0, 'Elige una situación a la izquierda para ver una conversación completa, o escribe un mensaje en el teléfono como si fueras un productor.');
     pintarAcciones();
-    $('#w-form').addEventListener('submit', (e) => { e.preventDefault(); const t = $('#w-txt').value.trim(); if (!t) return; $('#w-txt').value = ''; recibir(t); });
-    $('#w-audio').addEventListener('click', () => recibir('la chancadora se me tapa cuando el mineral viene húmedo, sobre todo en invierno, y pierdo como medio turno', true));
-    app.querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () => recibir(b.dataset.p)));
-    $('#w-reset').addEventListener('click', () => { $('#w-chat').innerHTML = '<span class="w-fecha">Hoy</span>'; AG.modo = 'inicio'; AG.borrador = {}; entendio('—', []); saludar(); });
+    $('#w-form').addEventListener('submit', (e) => { e.preventDefault(); const t = $('#w-txt').value.trim(); if (!t) return; $('#w-txt').value = ''; turnoEscena++; explicar(0, 0, 'Estás conversando tú con el agente.'); recibir(t); });
+    $('#w-audio').addEventListener('click', () => { turnoEscena++; recibir(AUDIO_EJ, true); });
+    app.querySelectorAll('[data-esc]').forEach((b) => b.addEventListener('click', () => correrEscena(b.dataset.esc)));
     saludar();
   }
   function pintarAcciones() {
     const ul = $('#w-acc'); if (!ul) return;
-    ul.innerHTML = D.registro_agente.length ? D.registro_agente.slice(0, 10).map(([h, t]) => `<li><span class="ic">✓</span><span>${esc(t)}<small>${h}</small></span></li>`).join('') : '<li class="vacio" style="display:block">Todavía no hay gestiones. Conversa con el agente.</li>';
+    ul.innerHTML = D.registro_agente.length ? D.registro_agente.slice(0, 4).map(([h, t]) => `<li><span class="ic">✓</span><span>${esc(t)}<small>${h}</small></span></li>`).join('') : '<li class="exp-vacio">Aún nada. Cuando el agente haga una gestión, aparecerá aquí.</li>';
   }
   const fmtW = (t) => t.replace(/\*([^*]+)\*/g, '<b>$1</b>').replace(/_([^_]+)_/g, '<i>$1</i>');
   function burbuja(html, quien, botones) {
@@ -384,9 +430,9 @@
   }
   function responder(textos, botones) {
     const c = $('#w-chat'); if (!c) return;
-    let i = 0;
+    let i = 0; AG.ocupado = true;
     const sig = () => {
-      if (i >= textos.length) return;
+      if (i >= textos.length) { AG.ocupado = false; return; }
       const e = document.createElement('div'); e.className = 'w-escribe'; e.innerHTML = '<i></i><i></i><i></i>'; c.appendChild(e); c.scrollTop = c.scrollHeight;
       const est = $('#w-estado'); if (est) est.textContent = 'escribiendo…';
       setTimeout(() => {
@@ -563,13 +609,7 @@
   window.addEventListener('hashchange', ruta);
   ruta();
   if (Q.get('demo') && location.hash === '#/whatsapp') {
-    const guiones = {
-      chat: [['Tengo un problema en mi faena'], ['__audio'], ['Diego de Almagro'], ['Cobre'], ['Pierdo horas de turno'], ['Sí, enviar']],
-      cobre: [['¿A cuánto está el cobre hoy?'], ['Sí, explícame'], ['¿Cómo va el GMT-0042?']],
-    };
-    const guion = guiones[Q.get('demo')] || guiones.chat;
-    let k = 0;
-    const paso = () => { if (k >= guion.length) return; const [m] = guion[k++]; if (m === '__audio') $('#w-audio').click(); else recibir(m); setTimeout(paso, 5200); };
-    setTimeout(paso, 3800);
+    const clave = { chat: 'problema', cobre: 'cobre', consulta: 'consulta', persona: 'persona' }[Q.get('demo')] || 'problema';
+    setTimeout(() => { const b = document.querySelector('[data-esc="' + clave + '"]'); if (b) b.click(); }, 1500);
   }
 })();

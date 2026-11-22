@@ -288,3 +288,52 @@ body.contraste .lat{background:#000}
 .nlu-datos span{background:#fff;border:1px solid var(--linea);border-radius:6px;padding:2px 8px;font-size:.82rem}
 .nlu-vacio{color:var(--gris);font-size:.86rem}
 @media (max-width:900px){.hero .in{grid-template-columns:1fr}.hero-mapa{border-left:0;border-top:1px solid var(--linea)}.pasos4{grid-template-columns:1fr 1fr}.mapa-cl{height:360px}}
+
+.sim3{display:grid;grid-template-columns:250px 390px 1fr;gap:26px;align-items:start}
+.escenas{display:flex;flex-direction:column;gap:10px}
+.esc-tit{font-family:Montserrat,sans-serif;font-size:1rem;margin-bottom:2px}
+.esc{display:flex;gap:12px;align-items:flex-start;text-align:left;background:#fff;border:2px solid var(--linea);border-radius:12px;padding:12px 14px;cursor:pointer;font:inherit;color:var(--tinta)}
+.esc:hover{border-color:var(--verde-o)}
+.esc.act{border-color:var(--verde-o);background:var(--claro)}
+.esc-n{width:28px;height:28px;border-radius:50%;background:var(--bosque);color:#fff;display:grid;place-items:center;font-family:Montserrat,sans-serif;font-weight:800;font-size:.85rem;flex:none}
+.esc b{display:block;font-size:.95rem;line-height:1.25}
+.esc small{color:var(--gris);font-size:.82rem}
+.esc-nota{color:var(--gris);font-size:.86rem;margin-top:4px}
+.explica{display:flex;flex-direction:column;gap:14px}
+.exp-caja{background:var(--bosque);color:#fff;border-radius:14px;padding:22px 24px;min-height:150px}
+.exp-paso{display:inline-block;background:var(--verde);color:var(--bosque);font-weight:800;font-size:.8rem;border-radius:6px;padding:2px 9px;margin-bottom:10px}
+.exp-caja p{font-size:1.15rem;line-height:1.45}
+.exp-fin{display:block;margin-top:10px;font-size:.92rem;color:#C9DCC0}
+.exp-ent{font-size:.95rem;color:var(--gris);min-height:1.4em}
+.exp-ent b{color:var(--tinta)}
+.exp-reg{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:16px 18px}
+.exp-reg>b{font-family:Montserrat,sans-serif;font-size:.95rem}
+.exp-reg .acciones-ag{max-height:none;margin-top:10px}
+.exp-vacio{color:var(--gris);font-size:.88rem;list-style:none}
+@media (max-width:1200px){.sim3{grid-template-columns:1fr 390px}.explica{grid-column:1/-1}}
+@media (max-width:900px){.sim3{grid-template-columns:1fr}}
+
+.est{background:none!important;padding:0;border-radius:0;font-family:Montserrat,sans-serif;font-size:.86rem;font-weight:700}
+.est::before{display:none}
+.est.gris,.desafio-f2.gris{color:#5C6660;--c:#5C6660}.est.ambar,.desafio-f2.ambar{color:#B46D0C;--c:#B46D0C}.est.verde,.desafio-f2.verde{color:#3F7A22;--c:#3F7A22}
+.est.azul,.desafio-f2.azul{color:#1F5590;--c:#1F5590}.est.morado,.desafio-f2.morado{color:#7A3E96;--c:#7A3E96}.est.oscuro,.desafio-f2.oscuro{color:#173A1F;--c:#173A1F}
+.desafio-f2{display:flex;flex-direction:column;gap:6px;padding:20px 22px;text-decoration:none;color:var(--tinta)}
+.desafio-f2:hover{border-color:var(--c)}
+.est-g{font-family:Montserrat,sans-serif;font-size:1.3rem;color:var(--c);line-height:1.2}
+.seg{display:flex;gap:4px;margin:6px 0 10px}.seg i{flex:1;height:6px;border-radius:3px;background:var(--linea)}.seg i.on{background:var(--c)}
+.desafio-f2 h3{color:var(--tinta)}
+.desafio-f2 .meta{font-size:.84rem;color:var(--gris)}
+.pie-f2{margin-top:auto;padding-top:10px}
+.orig{display:inline-flex;align-items:center;gap:6px;font-size:.84rem;color:var(--gris)}
+.wsp-mini{width:17px;height:17px;border-radius:50%;background:#25D366;display:inline-grid;place-items:center}
+.wsp-mini svg{width:11px;height:11px;fill:#fff}
+
+.canal{border:0;padding:0;font-size:.86rem;color:var(--gris)}
+
+.pasos-p1{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:20px 24px;border-top:1px solid var(--linea)}
+.pasos-p1>div{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center}
+.pasos-p1 .n1{grid-row:span 2;font-family:Montserrat,sans-serif;font-weight:800;font-size:2.3rem;color:var(--verde);line-height:1}
+.pasos-p1 b{font-size:.95rem}
+.pasos-p1 div>span:not(.n1){font-size:.85rem;color:var(--gris)}
+.pasos-p1 .flecha{font-size:1.4rem;color:#B9C7B3;flex:1;text-align:center}
+@media (max-width:900px){.pasos-p1{flex-wrap:wrap}.pasos-p1 .flecha{display:none}.pasos-p1>div{width:45%}}
