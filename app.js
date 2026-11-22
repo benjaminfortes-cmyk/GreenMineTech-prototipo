@@ -67,7 +67,7 @@
       <main class="main">${html}</main></div>`;
   }
   function vista(ruta, html, conApp) {
-    app.innerHTML = conApp && rol ? marcoApp(ruta, html) : cabPublica() + html + pie();
+    app.innerHTML = conApp && rol ? marcoApp(ruta, html) : cabPublica() + (conApp ? `<div class="pub-main">${html}</div>` : html) + pie();
     window.scrollTo(0, 0);
   }
   
@@ -327,7 +327,7 @@
   }
   function noEncontrado() { vista('#/', '<section class="sec"><h2>No encontramos esa página</h2><a href="#/">Volver al inicio</a></section>'); }
   
-  const AG = { modo: 'inicio', borrador: {}, ultimo: null };
+  const AG = { modo: 'inicio', borrador: {}, ultimo: null, verificado: true, pendiente: null };
   const hora = () => new Date().toTimeString().slice(0, 5);
   const PRECIOS = {
     cobre: { n: 'Cobre', v: 'US$ 4,61', u: 'por libra', var: '+0,8 %', ref: 'Bolsa de Metales de Londres (LME)' },
@@ -356,29 +356,69 @@
       ['¿A cuánto está el cobre hoy?', 'El agente también ayuda en el día a día del minero: entrega la cotización del día desde fuentes oficiales.'],
       ['Sí, explícame', 'Explica en simple cómo se calcula el pago al vender mineral.'],
       ['¿Dónde puedo vender mi mineral?', 'Orienta sobre dónde vender y, si hace falta, ofrece pasar con una persona.']] },
+    registro: { t: 'Número nuevo: verificación', s: 'Una sola vez, en el mismo chat', pasos: [
+      ['Hola, quiero saber cómo va el GMT-0042', 'Escribe alguien desde un número que la plataforma todavía no conoce. Antes de entregar cualquier dato, el agente verifica su identidad.'],
+      ['12.345.678-5', 'Pide el RUT y lo busca en el registro de productores de GreenMineTech.'],
+      ['482913', 'Envía un código al correo registrado del productor. Con el código correcto, el número queda verificado una sola vez y el agente responde la consulta. Un número anónimo nunca recibe información de los desafíos.']] },
     persona: { t: 'Pedir hablar con una persona', s: 'Y lo que el agente no responde', pasos: [
       ['Tengo dudas con el piloto, quiero hablar con una persona', 'Cuando el tema lo requiere, el agente traspasa la conversación a una operadora de CIPTEMIN con todo el contexto.'],
       ['¿Quién ganó el partido ayer?', 'Si le preguntan algo fuera de su ámbito, lo dice con amabilidad y vuelve a lo que sí puede ayudar.']] },
   };
+  const PROBLEMAS = {
+    agua: { t: 'Agua cara en la planta', pasos: [
+      ['El agua del camión aljibe nos cuesta cada vez más y queremos una solución para recircular el agua de la planta', 'El productor describe un problema de agua. El agente reconoce el tema y explica qué tipo de tecnologías existen.'],
+      ['Diego de Almagro', 'El agente pregunta solo lo que falta para armar el desafío.'],
+      ['Cobre', 'Cada respuesta queda guardada en la ficha del desafío.'],
+      ['Me sube los costos', 'Con esto arma el desafío completo y se lo muestra al productor para que lo revise.'],
+      ['Sí, enviar', 'Con la confirmación, el desafío queda creado en la plataforma y llega a CIPTEMIN. El productor no entró a ninguna página.']] },
+    polvo: { t: 'Polvo en los caminos', pasos: [
+      ['Hay mucho polvo en los caminos de la faena y es un problema para la salud de los trabajadores', 'Un problema de polvo y salud. El agente lo entiende aunque esté escrito con palabras simples.'],
+      ['Andacollo', 'El agente pregunta solo lo que falta para armar el desafío.'],
+      ['Oro', 'Cada respuesta queda guardada en la ficha del desafío.'],
+      ['Riesgo de seguridad', 'Con esto arma el desafío completo y se lo muestra al productor para que lo revise.'],
+      ['Sí, enviar', 'Con la confirmación, el desafío queda creado en la plataforma y llega a CIPTEMIN. El productor no entró a ninguna página.']] },
+    energia: { t: 'Gasto en diésel', pasos: [
+      ['Gastamos demasiado en diésel para los generadores y queremos una solución con energía solar', 'Un problema de energía. El agente orienta sobre las alternativas que se pueden probar en faena.'],
+      ['Tierra Amarilla', 'El agente pregunta solo lo que falta para armar el desafío.'],
+      ['Oro', 'Cada respuesta queda guardada en la ficha del desafío.'],
+      ['Me sube los costos', 'Con esto arma el desafío completo y se lo muestra al productor para que lo revise.'],
+      ['Sí, enviar', 'Con la confirmación, el desafío queda creado en la plataforma y llega a CIPTEMIN. El productor no entró a ninguna página.']] },
+    talud: { t: 'Talud que se mueve', pasos: [
+      ['Tenemos un problema con un talud que se mueve y queremos saber a tiempo si hay riesgo de derrumbe', 'Un problema de seguridad. El agente lo toma como desafío para buscar monitoreo con tecnología.'],
+      ['La Higuera', 'El agente pregunta solo lo que falta para armar el desafío.'],
+      ['Hierro', 'Cada respuesta queda guardada en la ficha del desafío.'],
+      ['Riesgo de seguridad', 'Con esto arma el desafío completo y se lo muestra al productor para que lo revise.'],
+      ['Sí, enviar', 'Con la confirmación, el desafío queda creado en la plataforma y llega a CIPTEMIN. El productor no entró a ninguna página.']] },
+    drones: { t: 'Inventario con drones', pasos: [
+      ['Tengo un problema con el sistema de inventarios y quiero una solución de registro con drones, ¿es posible?', 'El productor pregunta si algo es posible. El agente responde con claridad y lo convierte en desafío.'],
+      ['Diego de Almagro', 'El agente pregunta solo lo que falta para armar el desafío.'],
+      ['Cobre', 'Cada respuesta queda guardada en la ficha del desafío.'],
+      ['Me sube los costos', 'Con esto arma el desafío completo y se lo muestra al productor para que lo revise.'],
+      ['Sí, enviar', 'Con la confirmación, el desafío queda creado en la plataforma y llega a CIPTEMIN. El productor no entró a ninguna página.']] },
+  };
+  Object.entries(PROBLEMAS).forEach(([k, v]) => { ESCENAS['p-' + k] = { t: v.t, s: '', pasos: v.pasos, extra: true }; });
   let turnoEscena = 0;
+  let genChat = 0;
   function limpiarChat() {
     const c = $('#w-chat'); if (!c) return;
+    genChat++; AG.ocupado = false;
     c.innerHTML = '<span class="w-fecha">Hoy</span><div class="w-cifrado">🔒 Cuenta de empresa de GreenMineTech, operada por CIPTEMIN. Los mensajes están protegidos.</div>';
-    AG.modo = 'inicio'; AG.borrador = {}; entendio('');
+    AG.modo = 'inicio'; AG.borrador = {}; AG.verificado = true; AG.pendiente = null; entendio('');
   }
   function explicar(n, total, texto) {
     const el = $('#w-exp'); if (!el) return;
-    el.innerHTML = `<span class="exp-paso">${total ? `Paso ${n} de ${total}` : 'Conversación libre'}</span><p>${texto}</p>`;
+    el.innerHTML = `${total ? `<span class="exp-paso">Paso ${n} de ${total}</span>` : ''}<p>${texto}</p>`;
   }
   function correrEscena(clave) {
     const e = ESCENAS[clave]; const mio = ++turnoEscena;
     app.querySelectorAll('[data-esc]').forEach((b) => b.classList.toggle('act', b.dataset.esc === clave));
-    limpiarChat(); explicar(0, e.pasos.length, 'Mira la conversación: avanza sola.');
+    limpiarChat(); if (clave === 'registro') AG.verificado = false;
+    explicar(0, e.pasos.length, 'Mira la conversación: avanza sola.');
     let k = 0;
     const siguiente = () => {
       if (mio !== turnoEscena) return;
       if (AG.ocupado) { setTimeout(siguiente, 300); return; }
-      if (k >= e.pasos.length) { explicar(e.pasos.length, e.pasos.length, e.pasos[e.pasos.length - 1][1] + ' <span class="exp-fin">Puedes elegir otra situación o escribirle tú.</span>'); return; }
+      if (k >= e.pasos.length) { explicar(e.pasos.length, e.pasos.length, e.pasos[e.pasos.length - 1][1] + ' <span class="exp-fin">Puedes elegir otra situación a la izquierda.</span>'); return; }
       const [m, txt] = e.pasos[k++];
       explicar(k, e.pasos.length, txt);
       setTimeout(() => { if (mio !== turnoEscena) return; if (m === '__audio') recibir(AUDIO_EJ, true); else recibir(m); setTimeout(siguiente, 1600); }, 1100);
@@ -410,6 +450,7 @@
     vista('#/whatsapp', `<div class="intro-ag">
       <h1>Todo GreenMineTech, desde el WhatsApp del productor</h1>
       <p class="intro-lead">El productor minero ya usa WhatsApp todos los días. Por eso puede hacer casi todo su recorrido en GreenMineTech desde ahí: sin descargar nada, sin contraseñas y sin aprender una plataforma nueva. La plataforma se adapta a él, no al revés.</p>
+      <div class="intro-dest"><b>El productor no necesita entrar a ninguna página.</b> Desde que se identifica, una sola vez y en el mismo chat, hasta conocer los resultados de su piloto, todo ocurre en WhatsApp.</div>
       <h2>Lo que el productor puede hacer por WhatsApp</h2>
       <div class="intro-grid">${items.map(([k, t, s]) => `<div class="intro-it"><svg viewBox="0 0 24 24">${IC_AG[k]}</svg><div><b>${t}</b><span>${s}</span></div></div>`).join('')}</div>
       <div class="intro-dos"><div><h2>Cómo funciona</h2><ol class="intro-pasos">
@@ -420,15 +461,16 @@
         <li>Responde solo sobre el programa y temas de la minería.</li>
         <li>Nunca publica nada sin la confirmación del productor.</li>
         <li>Las decisiones, como evaluar y elegir soluciones, las toma CIPTEMIN.</li>
-        <li>La primera vez, el productor verifica su identidad con su RUT y un código.</li></ul></div></div>
-      <div class="intro-pie"><p>A continuación verás una demostración con conversaciones de ejemplo.</p><button class="btn b-verde b-grande" id="intro-ok">Continuar a la demostración →</button></div>
-    </div>`, !!rol);
+        <li>El productor verifica su identidad una sola vez, con su RUT y un código, en el mismo chat.</li></ul></div></div>
+      <div class="intro-pie"><p>A continuación verás una demostración con conversaciones de ejemplo. Fuera de este prototipo, en las pruebas con CIPTEMIN, podrán escribirle libremente al agente.</p><button class="btn b-verde b-grande" id="intro-ok">Continuar a la demostración →</button></div>
+    </div>`, true);
     $('#intro-ok').addEventListener('click', () => { try { sessionStorage.setItem('gmt-intro-ag', '1'); } catch (e) {} simulador(); });
   }
   function rutaAgente() {
     let visto = false;
     try { visto = sessionStorage.getItem('gmt-intro-ag') === '1'; } catch (e) { visto = false; }
-    if (visto || new URLSearchParams(location.search).get('demo')) return simulador();
+    const q = new URLSearchParams(location.search);
+    if (visto || q.get('demo')) return simulador();
     return introAgente();
   }
 
@@ -436,24 +478,24 @@
     vista('#/whatsapp', `<div class="top"><div><h1>Así conversa un productor con el agente</h1><p>El agente de GreenMineTech atiende por WhatsApp a toda hora. Elige una situación y mira la conversación completa.</p></div><button class="btn b-gris b-chico" id="ver-intro">Volver a la explicación</button></div>
       <div class="sim3">
         <div class="escenas"><b class="esc-tit">Elige una situación</b>
-          ${Object.entries(ESCENAS).map(([k, e], i) => `<button class="esc" data-esc="${k}"><span class="esc-n">${i + 1}</span><span><b>${e.t}</b><small>${e.s}</small></span></button>`).join('')}
-          <p class="esc-nota">También puedes escribirle tú directamente en el teléfono.</p></div>
+          ${Object.entries(ESCENAS).filter(([, e]) => !e.extra).map(([k, e], i) => `<button class="esc" data-esc="${k}"><span class="esc-n">${i + 1}</span><span><b>${e.t}</b><small>${e.s}</small></span></button>`).join('')}
+          <b class="esc-tit" style="margin-top:10px">Más ejemplos de problemas</b>
+          <div class="esc-chips">${Object.entries(ESCENAS).filter(([, e]) => e.extra).map(([k, e]) => `<button class="esc-chip" data-esc="${k}">${e.t}</button>`).join('')}</div>
+          <p class="esc-nota">Estas conversaciones son ejemplos que avanzan solos. Fuera de este prototipo, en las pruebas con CIPTEMIN y con productores, cada persona podrá escribirle libremente al agente.</p></div>
         <div class="telefono"><div class="pantalla">
           <div class="w-barra"><span>9:41</span><span>5G ▮▮▮</span></div>
           <div class="w-cab"><svg class="w-atras" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span class="av"><img src="img/greenminetech-logo.png" alt=""></span><div class="w-nom"><b>GreenMineTech ${VERIF}</b><small id="w-estado">en línea</small></div></div>
           <div class="w-chat" id="w-chat"></div>
-          <form class="w-input" id="w-form"><div class="w-caja"><input id="w-txt" placeholder="Mensaje" autocomplete="off"></div>
-            <button type="button" id="w-audio" title="Enviar un audio de ejemplo"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg></button></form>
+          <div class="w-input"><div class="w-caja w-guiada">Demostración guiada · elige una situación</div>
+            <span class="w-mic"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg></span></div>
         </div></div>
         <div class="explica"><div class="exp-caja" id="w-exp"></div><p class="exp-ent" id="w-ent"></p>
           <div class="exp-reg"><b>Quedó registrado en la plataforma</b><ul class="acciones-ag" id="w-acc"></ul></div></div>
-      </div>`, !!rol);
+      </div>`, true);
     limpiarChat();
-    explicar(0, 0, 'Elige una situación a la izquierda para ver una conversación completa, o escribe un mensaje en el teléfono como si fueras un productor.');
+    explicar(0, 0, 'Elige una situación a la izquierda para ver una conversación completa entre un productor y el agente.');
     pintarAcciones();
-    $('#w-form').addEventListener('submit', (e) => { e.preventDefault(); const t = $('#w-txt').value.trim(); if (!t) return; $('#w-txt').value = ''; turnoEscena++; explicar(0, 0, 'Estás conversando tú con el agente.'); recibir(t); });
-    $('#w-audio').addEventListener('click', () => { turnoEscena++; recibir(AUDIO_EJ, true); });
     app.querySelectorAll('[data-esc]').forEach((b) => b.addEventListener('click', () => correrEscena(b.dataset.esc)));
     $('#ver-intro').addEventListener('click', () => { turnoEscena++; introAgente(); });
     saludar();
@@ -469,21 +511,21 @@
     el.innerHTML = `<div class="w-txt">${quien === 'bot' ? fmtW(html) : html}<time>${hora()}${quien === 'yo' ? ' <span class="leido">✓✓</span>' : ''}</time></div>`;
     if (botones && botones.length) {
       const bx = document.createElement('div'); bx.className = 'w-botones';
-      bx.innerHTML = botones.map((b) => `<button type="button">${b}</button>`).join('');
-      bx.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { bx.querySelectorAll('button').forEach((x) => { x.disabled = true; }); recibir(b.textContent); }));
+      bx.innerHTML = botones.map((b) => `<span class="w-bt">${b}</span>`).join('');
       el.appendChild(bx);
     }
     c.appendChild(el); c.scrollTop = c.scrollHeight;
   }
   function responder(textos, botones) {
     const c = $('#w-chat'); if (!c) return;
-    let i = 0; AG.ocupado = true;
+    let i = 0; AG.ocupado = true; const g = genChat;
     const sig = () => {
+      if (g !== genChat) return;
       if (i >= textos.length) { AG.ocupado = false; return; }
       const e = document.createElement('div'); e.className = 'w-escribe'; e.innerHTML = '<i></i><i></i><i></i>'; c.appendChild(e); c.scrollTop = c.scrollHeight;
       const est = $('#w-estado'); if (est) est.textContent = 'escribiendo…';
       setTimeout(() => {
-        e.remove(); if ($('#w-estado')) $('#w-estado').textContent = 'Cuenta de empresa';
+        e.remove(); if (g !== genChat) return; if ($('#w-estado')) $('#w-estado').textContent = 'Cuenta de empresa';
         const ultimo = i === textos.length - 1;
         burbuja(textos[i], 'bot', ultimo ? botones : null); i++;
         setTimeout(sig, 380);
@@ -498,12 +540,38 @@
   const N = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
   function recibir(t, audio) {
+    const ultimos = app.querySelectorAll('.w-botones'); const bx = ultimos[ultimos.length - 1];
+    if (bx && !bx.classList.contains('usado')) { bx.classList.add('usado'); bx.querySelectorAll('.w-bt').forEach((x) => { if (N(x.textContent) === N(t)) x.classList.add('elegido'); }); }
     if (audio) {
       burbuja(`<div class="w-audio"><span class="av-mini">LA</span><span class="pl"></span><span class="on"></span><span class="dur">0:18</span></div><div class="w-transc"><b>Transcripción</b> ${esc(t)}</div>`, 'yo');
       registrar('Transcribió un audio del productor');
     } else burbuja(esc(t), 'yo');
+    procesar(t, audio);
+  }
+  function procesar(t, audio) {
     const n = N(t);
     const id = (t.match(/GMT[-\s]?(\d{1,4})/i) || [])[1];
+
+    if (AG.modo === 'rut') {
+      if (!/^\d{1,2}\.?\d{3}\.?\d{3}-[\dk]$/i.test(t.trim())) { entendio('Verificación · RUT no válido'); return responder(['Ese RUT no parece válido. ¿Me lo escribe de nuevo, con guion y dígito verificador? Por ejemplo: 12.345.678-5']); }
+      AG.modo = 'codigo'; entendio('Verificación de identidad · RUT');
+      registrar('Encontró el RUT en el registro de productores y envió un código de verificación');
+      return responder([`Gracias. Encontré a *${USUARIOS.productor.nombre}*, de ${USUARIOS.productor.org}.`, 'Le acabo de enviar un código de 6 dígitos a su correo registrado (l•••@minerasanlorenzo.cl). Escríbalo aquí para confirmar que es usted.']);
+    }
+    if (AG.modo === 'codigo') {
+      if (!/^\d{6}$/.test(t.trim())) { entendio('Verificación · código no válido'); return responder(['El código tiene 6 números. ¿Me lo escribe de nuevo?']); }
+      AG.modo = 'inicio'; AG.verificado = true; entendio('Verificación de identidad · código correcto');
+      registrar('Verificó la identidad del productor y asoció su número de WhatsApp (una sola vez)');
+      const pend = AG.pendiente; AG.pendiente = null;
+      responder(['✅ Listo, don Luis. Su número quedó verificado. *No tendrá que repetir esto*: desde ahora lo reconozco cada vez que me escriba.']);
+      if (pend) { const esperar = () => { if (AG.ocupado) { setTimeout(esperar, 300); return; } procesar(pend); }; setTimeout(esperar, 300); }
+      return;
+    }
+    if (!AG.verificado && (id || /(como va|estado|en que va|avance|mi desafio|problema|desafio)/.test(n))) {
+      AG.pendiente = t; AG.modo = 'rut'; entendio('Número no verificado · pedir identidad');
+      registrar('Recibió un mensaje de un número no registrado: pidió verificar identidad antes de entregar datos');
+      return responder(['¡Hola! 👋 Soy el agente de *GreenMineTech*.', 'Para proteger la información de cada productor, antes de compartir datos de un desafío necesito verificar su identidad. *Es solo esta vez.* ¿Me indica su RUT?']);
+    }
 
     if (AG.modo === 'problema') return problema(t, audio);
     if (AG.modo === 'comuna') { AG.borrador.comuna = t; AG.modo = 'mineral'; entendio('Formular desafío · ubicación', [['Comuna', t]]); return responder([`Perfecto, ${esc(t)}. ¿Qué mineral trabaja principalmente?`], ['Cobre', 'Oro', 'Hierro']); }
@@ -546,6 +614,9 @@
       return responder(['Estos son sus desafíos:\n\n' + mios.map((d) => `• *${d.id}* ${esc(d.titulo)}\n   ${ESTADOS[d.estado].t}`).join('\n\n'), 'Si quiere el detalle de alguno, escríbame su número (por ejemplo, GMT-0042).']);
     }
 
+    const pideSolucion = /\b(problema|problemas|solucion|soluciones|tecnologia|tecnologica|falla|fallas|se tapa|pierdo|perdemos|mejorar|automatizar|digitalizar)\b/.test(n) && !/\b(precio|cotiza|cotizacion)\b/.test(n);
+    if (pideSolucion && n.length > 35) return problema(t, audio);
+
     const metal = ['cobre', 'oro', 'plata', 'hierro'].find((m) => new RegExp('\\b' + m + '\\b').test(n));
     if (/(precio|cotiza|a cuanto|cuanto esta|valor|vale|cuanto paga)/.test(n) && (metal || /metal/.test(n)) || (AG.modo === 'inicio' && /^precio de metales$/.test(n))) {
       entendio('Consultar precio de metales', [['Metal', metal ? PRECIOS[metal].n : 'Todos']]);
@@ -559,17 +630,17 @@
       entendio('Orientación comercial', []);
       return responder(['En simple: el comprador paga según el *contenido de cobre* de su mineral (la ley), el *precio del cobre* del período y descuenta los *costos de tratamiento*. Por eso dos camiones del mismo peso pueden pagarse distinto.', 'Si quiere, le paso con una persona de CIPTEMIN para revisar su caso.'], ['Hablar con una persona', 'Eso es todo, gracias']);
     }
-    if (/(vender|venta|poder comprador|comprador|enami|tarifa)/.test(n)) {
+    if (/\b(vender|vendo|venta|ventas|poder(es)? comprador(es)?|comprador(es)?|enami|tarifas?)\b/.test(n)) {
       entendio('Orientación comercial · venta de mineral', []);
       registrar('Entregó orientación sobre venta de mineral');
       return responder(['Los pequeños productores pueden vender su mineral a los *poderes compradores* y plantas de ENAMI, y también a compradores privados. El pago depende de la ley del mineral, el precio del metal y la tarifa vigente.', 'Le recomiendo confirmar requisitos y tarifas directamente con el poder comprador más cercano. ¿Quiere que le pase con una persona de CIPTEMIN para orientarlo?'], ['Hablar con una persona', 'Contar un problema']);
     }
-    if (/(segur|accidente|sernageomin|riesgo|permiso|normativa|fiscaliz)/.test(n)) {
+    if (/\b(segur\w*|accidente\w*|sernageomin|riesgos?|permisos?|normativa\w*|fiscaliz\w*)\b/.test(n)) {
       entendio('Orientación en seguridad minera', []);
       registrar('Entregó orientación en seguridad y ofreció formular un desafío');
       return responder(['La seguridad es lo primero. 🦺 Para permisos, normativa y fiscalización, el organismo a cargo es *Sernageomin*.', 'Si tiene un riesgo concreto en su faena, como taludes, ventilación o polvo, lo podemos convertir en un desafío para buscar tecnología que lo resuelva. ¿Me cuenta qué está pasando?'], ['Contar un problema', 'Hablar con una persona']);
     }
-    if (/(persona|humano|operador|ejecutiv|alguien|hablar con)/.test(n)) {
+    if (/\b(persona|humano|operador\w*|ejecutiv\w*|alguien|hablar con)\b/.test(n)) {
       entendio('Derivar a una persona', [['Operadora', 'Carla Pizarro (CIPTEMIN)']]);
       registrar('Derivó la conversación a una operadora de CIPTEMIN con todo el contexto');
       return responder(['Por supuesto. Le aviso ahora a *Carla Pizarro*, operadora de CIPTEMIN, y le paso todo lo que hemos conversado para que no tenga que repetirlo. 🙌', 'Ella le escribirá por este mismo chat en horario hábil.']);
@@ -589,6 +660,7 @@
     }
     if (/^(hola|buenas|buenos|buen dia|alo|hey)/.test(n)) { entendio('Saludo', []); return saludar(); }
     if (/(gracias|eso es todo|chao|adios|hasta luego)/.test(n)) { entendio('Despedida', []); return responder(['¡Con gusto, don Luis! Aquí estaré cuando me necesite, a cualquier hora. Que le vaya bien en la faena. ⛏️']); }
+    if (/\b(mal|no funciona|no sabemos|nos cuesta|cuesta|lento|inventari\w*|dron\w*|bodega|faena|planta|mina|camion\w*|maquin\w*|equipos?|correa|bomba|relave\w*)\b/.test(n) && n.length > 25) return problema(t, audio);
     entendio('Fuera del ámbito del agente', []);
     registrar('Mantuvo la conversación dentro de su ámbito');
     return responder(['Disculpe, en eso no le puedo ayudar: estoy para apoyarlo en su faena, sus desafíos, sus pilotos y temas de la minería, como precios de metales o venta de mineral. 🙂'], ['Contar un problema', 'Consultar mi desafío', 'Precio de metales']);
@@ -597,7 +669,18 @@
     AG.borrador = { descripcion: t, titulo: resumirTitulo(t) };
     AG.modo = 'comuna';
     entendio('Formular desafío · problema', [['Problema', AG.borrador.titulo], ['Categoría sugerida', categoriaDe(t)]]);
-    return responder([`${audio ? 'Escuché su audio. ' : ''}Le entendí: _${esc(t.length > 140 ? t.slice(0, 140) + '…' : t)}_`, 'Es un problema que tienen varias faenas y hay tecnologías que se pueden probar. Para armar bien su desafío, ¿en qué comuna está su faena?'], ['Diego de Almagro', 'Tierra Amarilla', 'Andacollo']);
+    return responder([`${audio ? 'Escuché su audio. ' : ''}Le entendí: _${esc(t.length > 140 ? t.slice(0, 140) + '…' : t)}_`, comentarioProblema(t) + ' Para armar bien su desafío, ¿en qué comuna está su faena?'], ['Diego de Almagro', 'Tierra Amarilla', 'Andacollo']);
+  }
+  function comentarioProblema(t) {
+    const n = N(t);
+    if (n.includes('dron') && n.includes('inventari')) return 'Sí, es posible. Hay proveedores que usan drones para medir el volumen de los acopios y llevar el inventario de mineral con imágenes aéreas, sin medir a mano. Lo podemos publicar como desafío para que le propongan soluciones.';
+    if (n.includes('dron')) return 'Sí, hay proveedores que trabajan con drones en minería, por ejemplo para medir acopios, revisar taludes o inspeccionar zonas de difícil acceso. Lo podemos publicar como desafío.';
+    if (n.includes('inventari')) return 'Hay soluciones para llevar el inventario de mineral e insumos de forma digital y confiable. Lo podemos publicar como desafío.';
+    if (n.includes('agua')) return 'Es un problema frecuente en la pequeña minería. Hay tecnologías para recircular y tratar el agua de proceso que se pueden probar en su planta.';
+    if (n.includes('polvo')) return 'Entiendo, el polvo afecta la salud y la seguridad. Hay supresores, riego eficiente y sistemas de monitoreo que se pueden probar en sus caminos.';
+    if (n.includes('diesel') || n.includes('energia') || n.includes('generador')) return 'Hay faenas que ya combinan energía solar con baterías para bajar el consumo de diésel. Es una buena idea para probar en su faena.';
+    if (n.includes('talud') || n.includes('derrumbe')) return 'La seguridad es lo primero. Hay sistemas de monitoreo con sensores o radar que avisan a tiempo si el talud se mueve.';
+    return 'Es un problema que tienen varias faenas y hay tecnologías que se pueden probar.';
   }
   function resumirTitulo(t) {
     const n = N(t);
@@ -606,13 +689,19 @@
     if (n.includes('polvo')) return 'Control de polvo en la faena';
     if (n.includes('energia') || n.includes('diesel') || n.includes('generador')) return 'Reducir el costo de energía en la faena';
     if (n.includes('talud') || n.includes('derrumbe')) return 'Monitoreo de estabilidad de taludes';
-    const p = t.split(/[.,;]/)[0]; return p.charAt(0).toUpperCase() + p.slice(1, 70);
+    if (n.includes('inventari') && n.includes('dron')) return 'Registro de inventario de mineral con drones';
+    if (n.includes('inventari')) return 'Control digital del inventario de la faena';
+    if (n.includes('dron')) return 'Uso de drones en la faena';
+    let p = t.split(/[.,;?¿]/)[0].replace(/^(hola,?\s*)?(tengo|tenemos)\s+un\s+problema\s+(con|en)\s+/i, '').replace(/\s+y\s+(quiero|queremos|necesito).*/i, '');
+    return p.charAt(0).toUpperCase() + p.slice(1, 70);
   }
   function categoriaDe(t) {
     const n = N(t);
+    if (n.includes('talud') || n.includes('derrumbe')) return 'Seguridad';
     if (n.includes('chancad') || n.includes('molien')) return 'Chancado y molienda';
     if (n.includes('agua')) return 'Agua'; if (n.includes('polvo')) return 'Polvo y emisiones';
     if (n.includes('energia') || n.includes('diesel')) return 'Energía'; if (n.includes('talud')) return 'Seguridad';
+    if (n.includes('dron') || n.includes('inventari') || n.includes('registro')) return 'Digitalización y datos';
     return 'Otro';
   }
   
@@ -656,7 +745,7 @@
   window.addEventListener('hashchange', ruta);
   ruta();
   if (Q.get('demo') && location.hash === '#/whatsapp') {
-    const clave = { chat: 'problema', cobre: 'cobre', consulta: 'consulta', persona: 'persona' }[Q.get('demo')] || 'problema';
+    const clave = ESCENAS[Q.get('demo')] ? Q.get('demo') : ({ chat: 'problema' }[Q.get('demo')] || 'problema');
     setTimeout(() => { const b = document.querySelector('[data-esc="' + clave + '"]'); if (b) b.click(); }, 1500);
   }
 })();
