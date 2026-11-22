@@ -1,0 +1,502 @@
+(function () {
+  'use strict';
+  
+  const CLAVE = 'gmt-prototipo-v1';
+  let D;
+  try { D = JSON.parse(localStorage.getItem(CLAVE)) || null; } catch (e) { D = null; }
+  if (!D) D = JSON.parse(JSON.stringify(DATOS_BASE));
+  function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(D)); } catch (e) {} }
+  let rol = null;
+  try { rol = sessionStorage.getItem('gmt-rol'); } catch (e) { rol = null; }
+  function ponerRol(r) { rol = r; try { sessionStorage.setItem('gmt-rol', r || ''); } catch (e) {} }
+
+  const $ = (s, el) => (el || document).querySelector(s);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const est = (e) => `<span class="est ${ESTADOS[e].c}">${ESTADOS[e].t}</span>`;
+  const sol = (id) => D.soluciones.find((s) => s.id === id);
+  const des = (id) => D.desafios.find((d) => d.id === id);
+  const hoy = () => new Date().toISOString().slice(0, 10);
+  const fmt = (f) => { const [a, m, d] = f.split('-'); return `${d}-${m}-${a}`; };
+  function toast(t) {
+    const el = document.createElement('div'); el.className = 'toast'; el.textContent = t;
+    document.body.appendChild(el); setTimeout(() => el.remove(), 2600);
+  }
+  function nuevoId() {
+    const n = Math.max(...D.desafios.map((d) => +d.id.slice(4))) + 1;
+    return 'GMT-' + String(n).padStart(4, '0');
+  }
+
+  const ICO = {
+    casa: '<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+    lista: '<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+    mas: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+    piloto: '<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+    wsp: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-13.5 7.8L3 21l1.3-4.4A9 9 0 1 1 21 12z"/></svg>',
+    lupa: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+    caja: '<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>',
+    red: '<svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>',
+    graf: '<svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>',
+    doc: '<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h6"/></svg>',
+    gente: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 15c3 0 5 2 5 4"/></svg>',
+  };
+  const WSP_SVG = '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 13.9c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .1-1.6-.1-.4-.1-.9-.3-1.5-.6-2.6-1.1-4.3-3.8-4.4-4-.1-.2-1-1.4-1-2.7s.7-1.9.9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.7 1.2 1.6 2 1.1 1 2 1.3 2.3 1.4.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.2Z"/></svg>';
+  
+  const app = $('#app');
+  function acc() {
+    return `<div class="acc" role="group" aria-label="Accesibilidad"><button data-acc="-">A−</button><button data-acc="+">A+</button><button data-acc="c" aria-pressed="${document.body.classList.contains('contraste')}">Contraste</button></div>`;
+  }
+  function cabPublica() {
+    return `<header class="cab-pub"><div class="in"><a href="#/"><img src="img/greenminetech-logo.png" alt="GreenMineTech"></a>
+      <nav><a href="#/">Inicio</a><a href="#/soluciones">Soluciones</a><a href="#/desafios">Desafíos abiertos</a><a href="#/whatsapp">Agente WhatsApp</a></nav>
+      ${acc()}<a class="btn b-linea b-chico" href="#/ingresar">Ingresar</a></div></header>`;
+  }
+  function pie() {
+    return `<footer class="pie"><div class="in"><img src="img/greenminetech-logo-blanco.png" alt="GreenMineTech"><span>Operado por CIPTEMIN · Apoyado por CORFO</span><span>Prototipo de SETROF para la licitación. Datos de ejemplo.</span></div></footer>`;
+  }
+  const MENUS = {
+    productor: [['#/p', 'casa', 'Mi inicio'], ['#/p/desafios', 'lista', 'Mis desafíos'], ['#/p/nuevo', 'mas', 'Nuevo desafío'], ['#/pilotaje/P-007', 'piloto', 'Pilotajes'], ['#/soluciones', 'lupa', 'Soluciones'], ['#/whatsapp', 'wsp', 'Agente WhatsApp']],
+    proveedor: [['#/v', 'casa', 'Mi inicio'], ['#/desafios', 'lista', 'Convocatorias'], ['#/v/soluciones', 'caja', 'Mis soluciones'], ['#/soluciones', 'lupa', 'Catálogo']],
+    operador: [['#/o', 'casa', 'Bandeja'], ['#/o/desafios', 'lista', 'Desafíos'], ['#/o/match/GMT-0042', 'red', 'Matchmaking'], ['#/pilotaje/P-007', 'piloto', 'Pilotajes'], ['#/o/indicadores', 'graf', 'Indicadores'], ['#/o/contenidos', 'doc', 'Contenidos'], ['#/o/usuarios', 'gente', 'Usuarios'], ['#/whatsapp', 'wsp', 'Agente WhatsApp']],
+  };
+  function marcoApp(ruta, html) {
+    const u = USUARIOS[rol];
+    const menu = MENUS[rol].map(([h, i, t]) => `<a href="${h}" class="${ruta.startsWith(h) && (h !== '#/p' && h !== '#/v' && h !== '#/o' || ruta === h) ? 'act' : ''}">${ICO[i]}${t}</a>`).join('');
+    return `<div class="app"><aside class="lat"><div class="logo"><img src="img/greenminetech-logo-blanco.png" alt="GreenMineTech"></div>
+      <div class="sep">${rol === 'operador' ? 'Operación CIPTEMIN' : rol === 'proveedor' ? 'Proveedor' : 'Productor'}</div>${menu}
+      <div class="yo"><span class="av">${u.ini}</span><div><b>${u.nombre}</b>${u.org}<br><a href="#/salir">Cambiar de perfil</a></div></div></aside>
+      <main class="main">${html}</main></div>`;
+  }
+  function vista(ruta, html, conApp) {
+    app.innerHTML = conApp && rol ? marcoApp(ruta, html) : cabPublica() + html + pie();
+    window.scrollTo(0, 0);
+  }
+  
+  function tarjetaDesafio(d) {
+    return `<a class="card desafio-c" href="#/desafio/${d.id}"><div class="fila-sb">${est(d.estado)}<span class="canal">${d.canal === 'WhatsApp' ? 'vía WhatsApp' : 'vía web'}</span></div>
+      <h3>${esc(d.titulo)}</h3><span class="meta">${d.id} · ${d.comuna}, ${d.region} · ${d.mineral}</span></a>`;
+  }
+  function inicio() {
+    const abiertos = D.desafios.filter((d) => ['publicado', 'evaluacion', 'pilotaje'].includes(d.estado)).slice(0, 3);
+    vista('#/', `
+      <section class="hero"><div class="in"><div>
+        <span class="kick">Programa GreenMineTech · CIPTEMIN</span>
+        <h1>Tecnología probada para la pequeña y mediana minería</h1>
+        <p>Publica el problema de tu faena y te conectamos con proveedores tecnológicos para probar la solución en terreno, con el acompañamiento de CIPTEMIN.</p>
+        <div class="ctas"><a class="btn b-verde b-grande" href="#/ingresar">Publicar un desafío</a><a class="btn b-linea b-grande" href="#/ingresar">Registrar una solución</a></div>
+        <a class="wsp-l" href="#/whatsapp"><span class="wsp-ic">${WSP_SVG}</span>¿Sin tiempo? Cuéntanos tu problema por WhatsApp, 24/7</a>
+      </div>
+      <div class="hero-tel"><div class="tc"><b>Agente GreenMineTech</b><small>en línea</small></div><div class="tb">
+        <div class="mm">¡Hola, don Luis! ¿Qué problema tiene en su faena?</div><div class="mm y">🎤 Audio · 0:42</div>
+        <div class="mm">Le entendí: la chancadora se tapa con mineral húmedo. ¿En qué comuna está su faena?</div><div class="mm y">Diego de Almagro</div>
+        <div class="mm">Listo ✅ Armé su desafío. ¿Se lo leo para que lo confirme?</div></div></div>
+      </div>
+      <div class="franja-pasos"><div><i>01</i><b>Formulación</b>del desafío</div><div><i>02</i><b>Convocatoria</b>a proveedores</div><div><i>03</i><b>Evaluación</b>de madurez (TRL)</div><div><i>04</i><b>Emparejamiento</b>asistido</div><div><i>05</i><b>Pilotaje</b>supervisado</div><div><i>06</i><b>Resultados</b>y decisión</div></div>
+      </section>
+      <section class="sec"><span class="kick">Desafíos abiertos</span><h2>Problemas reales que buscan solución</h2>
+        <div class="grid3">${abiertos.map(tarjetaDesafio).join('')}</div>
+        <p style="margin-top:16px"><a href="#/desafios">Ver todos los desafíos →</a></p></section>`);
+  }
+  function listaPublica() {
+    const lista = D.desafios.filter((d) => d.estado !== 'borrador' && d.estado !== 'revision');
+    const html = `<div class="top"><div><h1>Desafíos</h1><p>Convocatorias abiertas y desafíos en curso de la pequeña y mediana minería.</p></div></div>
+      <div class="grid3">${lista.map(tarjetaDesafio).join('')}</div>`;
+    if (rol) vista('#/desafios', html, true); else vista('#/desafios', `<section class="sec">${html}</section>`);
+  }
+  function catalogo() {
+    const cats = [...new Set(D.soluciones.map((s) => s.categoria))];
+    const html = `<div class="top"><div><h1>Catálogo de soluciones</h1><p>Tecnologías registradas por proveedores, con su nivel de madurez (TRL).</p></div></div>
+      <div class="filtros"><input id="f-txt" placeholder="Buscar por palabra (ej.: agua, energía)"><select id="f-cat"><option value="">Todas las categorías</option>${cats.map((c) => `<option>${c}</option>`).join('')}</select>
+      <select id="f-trl"><option value="0">Cualquier TRL</option><option value="6">TRL 6 o más</option><option value="8">TRL 8 o más</option></select></div>
+      <div class="card"><table class="tabla"><thead><tr><th>Solución</th><th>Proveedor</th><th>Categoría</th><th>TRL</th><th>Región</th></tr></thead><tbody id="t-sol"></tbody></table></div>`;
+    if (rol) vista('#/soluciones', html, true); else vista('#/soluciones', `<section class="sec">${html}</section>`);
+    const pintar = () => {
+      const q = $('#f-txt').value.toLowerCase(), c = $('#f-cat').value, t = +$('#f-trl').value;
+      $('#t-sol').innerHTML = D.soluciones.filter((s) => (!c || s.categoria === c) && s.trl >= t && (!q || (s.nombre + s.desc + s.categoria).toLowerCase().includes(q)))
+        .map((s) => `<tr><td><b>${esc(s.nombre)}</b><br><small style="color:var(--gris)">${esc(s.desc)}</small></td><td>${s.proveedor}</td><td>${s.categoria}</td><td><span class="trl">TRL ${s.trl}</span></td><td>${s.region}</td></tr>`).join('') || '<tr><td colspan="5">Sin resultados.</td></tr>';
+    };
+    ['#f-txt', '#f-cat', '#f-trl'].forEach((s) => $(s).addEventListener('input', pintar)); pintar();
+  }
+  function ingresar() {
+    vista('#/ingresar', `<section class="ingreso"><h1>Ingresa a GreenMineTech</h1><p style="color:var(--gris)">Prototipo: elige un perfil para recorrer la plataforma como lo haría cada actor.</p>
+      <div class="perfiles">
+        <button class="perfil" data-rol="productor"><span class="av" style="background:#2F6FB3">LA</span><b>Productor minero</b><span>Luis Araya · Minera San Lorenzo. Publica desafíos y sigue sus pilotos.</span></button>
+        <button class="perfil" data-rol="proveedor"><span class="av" style="background:#B07A1E">DR</span><b>Proveedor tecnológico</b><span>Daniela Rojas · AquaMin SpA. Registra soluciones y postula a convocatorias.</span></button>
+        <button class="perfil" data-rol="operador"><span class="av" style="background:#4D7F3A">CP</span><b>Operador CIPTEMIN</b><span>Carla Pizarro. Revisa desafíos, hace el matchmaking y sigue los indicadores.</span></button>
+      </div>
+      <p style="margin-top:22px;color:var(--gris)">¿Eres productor y prefieres no usar la web? <a href="#/whatsapp">Habla con el agente por WhatsApp</a>.</p></section>`);
+    app.querySelectorAll('[data-rol]').forEach((b) => b.addEventListener('click', () => { ponerRol(b.dataset.rol); location.hash = { productor: '#/p', proveedor: '#/v', operador: '#/o' }[b.dataset.rol]; }));
+  }
+  
+  function panelProductor() {
+    const mios = D.desafios.filter((d) => d.autor === 'productor');
+    vista('#/p', `<div class="top"><div><h1>Hola, ${USUARIOS.productor.nombre.split(' ')[0]} 👋</h1><p>${USUARIOS.productor.org} · ${USUARIOS.productor.detalle}</p></div>
+      <div style="display:flex;gap:10px"><a class="btn b-wsp" href="#/whatsapp">${ICO.wsp.replace('<svg', '<svg fill="none" stroke="currentColor" stroke-width="2"')}Hablar con el agente</a><a class="btn b-verde" href="#/p/nuevo">Nuevo desafío</a></div></div>
+      <div class="kpis"><div class="card kpi"><b>${mios.length}</b><span>desafíos publicados por ti</span></div><div class="card kpi"><b>${mios.filter((d) => d.estado === 'evaluacion').length}</b><span>en evaluación</span></div>
+      <div class="card kpi"><b>3</b><span>soluciones en estudio</span></div><div class="card kpi"><b>${mios.filter((d) => d.canal === 'WhatsApp').length}</b><span>creados por WhatsApp</span></div></div>
+      <div class="dos"><div class="card card-p"><div class="fila-sb" style="margin-bottom:6px"><h3>Mis desafíos</h3><a href="#/p/desafios">Ver todos</a></div>
+        <table class="tabla"><thead><tr><th>Desafío</th><th>Estado</th><th>Canal</th></tr></thead><tbody>${mios.map((d) => `<tr><td><a href="#/desafio/${d.id}">${esc(d.titulo)}</a><br><small style="color:var(--gris)">${d.id} · ${fmt(d.fecha)}</small></td><td>${est(d.estado)}</td><td><span class="canal">${d.canal}</span></td></tr>`).join('')}</tbody></table></div>
+      <div class="card card-p"><h3>Avisos</h3><ul class="lista">${D.avisos.map(([f, t]) => `<li><span class="fecha">${fmt(f)}</span><span>${esc(t)}</span></li>`).join('')}</ul>
+        <p style="font-size:.84rem;color:var(--gris);margin-top:8px">También te llegan por WhatsApp.</p></div></div>`, true);
+  }
+  function misDesafios() {
+    const mios = D.desafios.filter((d) => d.autor === 'productor');
+    vista('#/p/desafios', `<div class="top"><div><h1>Mis desafíos</h1><p>Todo lo que publicaste, por la web o por WhatsApp.</p></div><a class="btn b-verde" href="#/p/nuevo">Nuevo desafío</a></div>
+      <div class="grid3">${mios.map(tarjetaDesafio).join('')}</div>`, true);
+  }
+  function detalle(id) {
+    const d = des(id); if (!d) return noEncontrado();
+    const i = ORDEN_ESTADOS.indexOf(d.estado);
+    const linea = ['Borrador', 'Revisión', 'Convocatoria', 'Evaluación', 'Pilotaje', 'Cierre'].map((t, k) => `<div class="${k < i ? 'ok' : k === i ? 'ahora' : ''}">${t}</div>`).join('');
+    const evals = (D.evaluaciones[id] || []).map((e) => `<li><span class="trl">TRL ${sol(e.sol).trl}</span><div><b>${esc(sol(e.sol).nombre)}</b><br><small style="color:var(--gris)">${sol(e.sol).proveedor} · ${e.estado}</small></div></li>`).join('');
+    const volver = rol === 'operador' ? '#/o/desafios' : rol === 'productor' ? '#/p/desafios' : '#/desafios';
+    const html = `<div class="migas"><a href="${volver}">← Volver</a></div>
+      <div class="top"><div><h1>${esc(d.titulo)}</h1><p>${d.id} · ${d.org} · ${d.comuna}, ${d.region}</p></div><div>${est(d.estado)}</div></div>
+      <div class="card card-p" style="margin-bottom:18px"><div class="linea-est">${linea}</div></div>
+      <div class="dos"><div style="display:flex;flex-direction:column;gap:18px">
+        <div class="card card-p"><h3 style="margin-bottom:8px">Descripción del problema</h3><p>${esc(d.descripcion)}</p></div>
+        <div class="card card-p"><h3 style="margin-bottom:6px">Historial</h3><ul class="lista hist">${d.historial.map(([f, q, t]) => `<li><span class="fecha">${fmt(f)}</span><span><span class="quien">${esc(q)}</span> · ${esc(t)}</span></li>`).join('')}</ul></div></div>
+      <div style="display:flex;flex-direction:column;gap:18px"><div class="card card-p"><h3 style="margin-bottom:10px">Ficha</h3><dl class="dl"><dt>Mineral</dt><dd>${d.mineral}</dd><dt>Categoría</dt><dd>${d.categoria}</dd><dt>Impacto</dt><dd>${d.impacto}</dd><dt>Urgencia</dt><dd>${d.urgencia}</dd><dt>Ingresó por</dt><dd>${d.canal}</dd><dt>Fecha</dt><dd>${fmt(d.fecha)}</dd></dl></div>
+        ${evals ? `<div class="card card-p"><h3>Soluciones en estudio</h3><ul class="lista">${evals}</ul>${rol === 'operador' ? `<a class="btn b-verde b-chico" href="#/o/match/${id}">Abrir matchmaking</a>` : ''}</div>` : ''}
+        ${rol === 'operador' && d.estado === 'revision' ? `<div class="card card-p"><h3 style="margin-bottom:8px">Revisión</h3><p style="font-size:.88rem;color:var(--gris);margin-bottom:12px">Revisa el desafío y publícalo para abrir la convocatoria a proveedores.</p><div style="display:flex;gap:8px"><button class="btn b-verde b-chico" id="publicar">Formalizar y publicar</button><button class="btn b-gris b-chico" id="pedir">Pedir más información</button></div></div>` : ''}
+      </div></div>`;
+    if (rol) vista('#/desafio', html, true); else vista('#/desafio', `<section class="sec">${html}</section>`);
+    const pub = $('#publicar');
+    if (pub) {
+      pub.addEventListener('click', () => { d.estado = 'publicado'; d.historial.push([hoy(), USUARIOS.operador.nombre, 'Formalizó y publicó la convocatoria']); D.avisos.unshift([hoy(), `Tu desafío ${d.id} fue publicado: ya está abierta la convocatoria.`]); guardar(); toast('Desafío publicado y proveedores notificados'); detalle(id); });
+      $('#pedir').addEventListener('click', () => { d.historial.push([hoy(), USUARIOS.operador.nombre, 'Pidió más información al productor (aviso por WhatsApp)']); guardar(); toast('Se avisó al productor por WhatsApp'); detalle(id); });
+    }
+  }
+
+  let W = {};
+  function nuevoDesafio() {
+    W = { paso: 1, titulo: '', descripcion: '', comuna: '', mineral: '', categoria: '', impacto: '', urgencia: '' };
+    pintarWizard();
+  }
+  function opc(campo, valores) {
+    return `<div class="opciones">${valores.map(([v, s]) => `<button type="button" class="opcion ${W[campo] === v ? 'sel' : ''}" data-c="${campo}" data-v="${v}">${v}${s ? `<small>${s}</small>` : ''}</button>`).join('')}</div>`;
+  }
+  function pintarWizard() {
+    const total = 5;
+    const barras = Array.from({ length: total }, (_, k) => `<span class="${k < W.paso ? 'ok' : ''}"></span>`).join('');
+    let c = '';
+    if (W.paso === 1) c = `<h2>¿Qué problema tiene en su faena?</h2><p class="ayuda">Cuéntelo con sus palabras, como se lo explicaría a un colega. No necesita términos técnicos.</p>
+      <div class="campo"><label for="w-t">Un título corto</label><input id="w-t" value="${esc(W.titulo)}" placeholder="Ej.: La chancadora se tapa con mineral húmedo"></div>
+      <div class="campo"><label for="w-d">¿Qué pasa y desde cuándo?</label><textarea id="w-d" placeholder="Ej.: En invierno el mineral llega húmedo y la chancadora se tapa. Perdemos medio turno.">${esc(W.descripcion)}</textarea></div>`;
+    if (W.paso === 2) c = `<h2>¿Dónde está su faena?</h2><p class="ayuda">Nos sirve para buscar proveedores que puedan llegar a su zona.</p>
+      <div class="campo"><label for="w-c">Comuna</label><input id="w-c" value="${esc(W.comuna)}" placeholder="Ej.: Diego de Almagro"></div><div class="campo"><label>Mineral principal</label>${opc('mineral', [['Cobre'], ['Oro'], ['Hierro'], ['Otro']])}</div>`;
+    if (W.paso === 3) c = `<h2>¿De qué tipo es el problema?</h2><p class="ayuda">Elija la opción más cercana. CIPTEMIN la puede ajustar después.</p>${opc('categoria', [['Agua'], ['Energía'], ['Chancado y molienda'], ['Seguridad'], ['Polvo y emisiones'], ['Otro']])}`;
+    if (W.paso === 4) c = `<h2>¿Cuánto le afecta?</h2><p class="ayuda">Así CIPTEMIN puede priorizar.</p><div class="campo"><label>Impacto principal</label>${opc('impacto', [['Pierde horas de turno', 'La operación se detiene'], ['Aumenta costos', 'Gasta más de lo necesario'], ['Riesgo de seguridad', 'Puede haber accidentes'], ['Impacto ambiental', 'Agua, polvo, residuos']])}</div>
+      <div class="campo"><label>Urgencia</label>${opc('urgencia', [['Alta', 'Necesito resolverlo este año'], ['Media', 'Puede esperar unos meses']])}</div>`;
+    if (W.paso === 5) c = `<h2>Revise su desafío</h2><p class="ayuda">Si está todo bien, lo enviamos a revisión de CIPTEMIN. Le avisaremos por WhatsApp y correo.</p>
+      <div class="resumen-d"><h3 class="mont" style="margin-bottom:6px">${esc(W.titulo || 'Sin título')}</h3><p style="margin-bottom:10px">${esc(W.descripcion || '—')}</p>
+      <dl class="dl"><dt>Comuna</dt><dd>${esc(W.comuna || '—')} <a href="#" data-ir="2">Cambiar</a></dd><dt>Mineral</dt><dd>${W.mineral || '—'} <a href="#" data-ir="2">Cambiar</a></dd><dt>Tipo</dt><dd>${W.categoria || '—'} <a href="#" data-ir="3">Cambiar</a></dd><dt>Impacto</dt><dd>${W.impacto || '—'} <a href="#" data-ir="4">Cambiar</a></dd><dt>Urgencia</dt><dd>${W.urgencia || '—'} <a href="#" data-ir="4">Cambiar</a></dd></dl></div>`;
+    vista('#/p/nuevo', `<div class="migas"><a href="#/p">← Mi inicio</a></div><div class="top"><div><h1>Nuevo desafío</h1><p>Paso ${W.paso} de ${total} · se guarda automáticamente</p></div><a class="btn b-wsp b-chico" href="#/whatsapp">Prefiero hacerlo por WhatsApp</a></div>
+      <div class="card card-p wiz"><div class="pasos-w">${barras}</div>${c}
+      <div class="wiz-pie"><button class="btn b-gris" id="w-atras" ${W.paso === 1 ? 'style="visibility:hidden"' : ''}>Atrás</button><button class="btn b-verde" id="w-sig">${W.paso === total ? 'Enviar a revisión' : 'Continuar'}</button></div></div>`, true);
+    app.querySelectorAll('.opcion').forEach((b) => b.addEventListener('click', () => { leerWizard(); W[b.dataset.c] = b.dataset.v; pintarWizard(); }));
+    app.querySelectorAll('[data-ir]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); W.paso = +a.dataset.ir; pintarWizard(); }));
+    $('#w-atras').addEventListener('click', () => { leerWizard(); W.paso--; pintarWizard(); });
+    $('#w-sig').addEventListener('click', () => {
+      leerWizard();
+      if (W.paso === 1 && !W.titulo.trim()) { toast('Escriba un título corto para su desafío'); return; }
+      if (W.paso < total) { W.paso++; pintarWizard(); return; }
+      const id = crearDesafio({ titulo: W.titulo, descripcion: W.descripcion, comuna: W.comuna || 'Sin indicar', mineral: W.mineral || 'Otro', categoria: W.categoria || 'Otro', impacto: W.impacto || 'Sin indicar', urgencia: W.urgencia || 'Media', canal: 'Web', quien: USUARIOS.productor.nombre });
+      toast('Desafío enviado a revisión'); location.hash = '#/desafio/' + id;
+    });
+  }
+  function leerWizard() {
+    const v = (s) => { const el = $(s); return el ? el.value : null; };
+    if (v('#w-t') !== null) W.titulo = v('#w-t');
+    if (v('#w-d') !== null) W.descripcion = v('#w-d');
+    if (v('#w-c') !== null) W.comuna = v('#w-c');
+  }
+  function crearDesafio(o) {
+    const id = nuevoId();
+    D.desafios.unshift({ id, titulo: o.titulo, org: USUARIOS.productor.org, autor: 'productor', region: 'Atacama', comuna: o.comuna, mineral: o.mineral, categoria: o.categoria, estado: 'revision', fecha: hoy(), impacto: o.impacto, urgencia: o.urgencia, canal: o.canal, descripcion: o.descripcion,
+      historial: [[hoy(), o.quien, o.canal === 'WhatsApp' ? 'Creó el desafío conversando con el agente' : 'Creó el desafío en la web'], [hoy(), 'Plataforma', 'Envió el desafío a revisión de CIPTEMIN']] });
+    D.avisos.unshift([hoy(), `Recibimos tu desafío ${id}. CIPTEMIN lo está revisando.`]);
+    guardar(); return id;
+  }
+  
+  function panelProveedor() {
+    const mias = D.soluciones.filter((s) => s.propio);
+    const abiertas = D.desafios.filter((d) => d.estado === 'publicado' || d.estado === 'evaluacion');
+    vista('#/v', `<div class="top"><div><h1>Hola, ${USUARIOS.proveedor.nombre.split(' ')[0]}</h1><p>${USUARIOS.proveedor.org} · ${USUARIOS.proveedor.detalle}</p></div><a class="btn b-verde" href="#/v/soluciones">Registrar solución</a></div>
+      <div class="kpis"><div class="card kpi"><b>${mias.length}</b><span>soluciones registradas</span></div><div class="card kpi"><b>${abiertas.length}</b><span>convocatorias abiertas</span></div><div class="card kpi"><b>1</b><span>solución recomendada</span></div><div class="card kpi"><b>0</b><span>pilotos en curso</span></div></div>
+      <div class="card card-p"><h3 style="margin-bottom:6px">Convocatorias que calzan con tus soluciones</h3><table class="tabla"><thead><tr><th>Desafío</th><th>Región</th><th>Estado</th><th></th></tr></thead><tbody>
+      ${abiertas.map((d) => `<tr><td><a href="#/desafio/${d.id}">${esc(d.titulo)}</a><br><small style="color:var(--gris)">${d.categoria} · ${d.mineral}</small></td><td>${d.region}</td><td>${est(d.estado)}</td><td><button class="btn b-linea b-chico" data-post="${d.id}">Postular</button></td></tr>`).join('')}</tbody></table></div>`, true);
+    app.querySelectorAll('[data-post]').forEach((b) => b.addEventListener('click', () => modalPostular(b.dataset.post)));
+  }
+  function modalPostular(id) {
+    const d = des(id);
+    const m = document.createElement('div'); m.className = 'modal-f';
+    m.innerHTML = `<div class="modal"><h2>Postular a ${d.id}</h2><p style="color:var(--gris);margin-bottom:14px">${esc(d.titulo)}</p>
+      <div class="campo"><label>Solución</label><select id="m-sol">${D.soluciones.filter((s) => s.propio).map((s) => `<option value="${s.id}">${esc(s.nombre)} (TRL ${s.trl})</option>`).join('')}</select></div>
+      <div class="campo"><label>¿Cómo resuelve el desafío?</label><textarea style="min-height:90px" placeholder="Explica brevemente tu propuesta"></textarea></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn b-gris" id="m-c">Cancelar</button><button class="btn b-verde" id="m-ok">Enviar postulación</button></div></div>`;
+    document.body.appendChild(m);
+    $('#m-c', m).addEventListener('click', () => m.remove());
+    $('#m-ok', m).addEventListener('click', () => { d.historial.push([hoy(), USUARIOS.proveedor.org, 'Postuló una solución']); guardar(); m.remove(); toast('Postulación enviada a CIPTEMIN'); });
+  }
+  function misSoluciones() {
+    const mias = D.soluciones.filter((s) => s.propio);
+    vista('#/v/soluciones', `<div class="top"><div><h1>Mis soluciones</h1><p>Registra cada tecnología con su nivel de madurez (TRL) y sus requisitos.</p></div></div>
+      <div class="dos"><div class="card"><table class="tabla"><thead><tr><th>Solución</th><th>Categoría</th><th>TRL</th></tr></thead><tbody id="t-mias">${mias.map((s) => `<tr><td><b>${esc(s.nombre)}</b><br><small style="color:var(--gris)">${esc(s.req)}</small></td><td>${s.categoria}</td><td><span class="trl">TRL ${s.trl}</span></td></tr>`).join('')}</tbody></table></div>
+      <div class="card card-p"><h3 style="margin-bottom:12px">Registrar nueva solución</h3>
+        <div class="campo"><label for="s-n">Nombre</label><input id="s-n" placeholder="Ej.: Monitoreo remoto de bombas"></div>
+        <div class="campo"><label for="s-c">Categoría</label><select id="s-c"><option>Agua</option><option>Energía</option><option>Chancado y molienda</option><option>Seguridad</option><option>Polvo y emisiones</option></select></div>
+        <div class="campo"><label for="s-t">Nivel de madurez (TRL)</label><select id="s-t">${[4, 5, 6, 7, 8, 9].map((n) => `<option value="${n}">TRL ${n}${n >= 7 ? ' · probada en entorno real' : n >= 5 ? ' · validada en entorno relevante' : ''}</option>`).join('')}</select></div>
+        <div class="campo"><label for="s-r">Requisitos de implementación</label><input id="s-r" placeholder="Ej.: energía trifásica, cobertura celular"></div>
+        <button class="btn b-verde" id="s-ok">Registrar</button></div></div>`, true);
+    $('#s-ok').addEventListener('click', () => {
+      const n = $('#s-n').value.trim(); if (!n) { toast('Escribe el nombre de la solución'); return; }
+      D.soluciones.push({ id: 'S-' + (100 + D.soluciones.length + 1), nombre: n, proveedor: USUARIOS.proveedor.org, propio: true, categoria: $('#s-c').value, trl: +$('#s-t').value, region: 'Antofagasta', desc: 'Registrada en el prototipo.', req: $('#s-r').value || '—' });
+      guardar(); toast('Solución registrada en el catálogo'); misSoluciones();
+    });
+  }
+  
+  function bandeja() {
+    const rev = D.desafios.filter((d) => d.estado === 'revision');
+    const t = D.desafios.length;
+    vista('#/o', `<div class="top"><div><h1>Bandeja de operación</h1><p>Lo que necesita tu atención hoy.</p></div><a class="btn b-linea" href="#/o/indicadores">Ver indicadores</a></div>
+      <div class="kpis"><div class="card kpi"><b>${rev.length}</b><span>desafíos por revisar</span></div><div class="card kpi"><b>${D.desafios.filter((d) => d.estado === 'evaluacion').length}</b><span>en matchmaking</span></div>
+      <div class="card kpi"><b>${D.pilotajes.length}</b><span>pilotaje en curso</span></div><div class="card kpi"><b>${Math.round(100 * D.desafios.filter((d) => d.canal === 'WhatsApp').length / t)} %</b><span>de desafíos llegó por WhatsApp</span></div></div>
+      <div class="dos"><div class="card card-p"><h3 style="margin-bottom:6px">Desafíos por revisar</h3>
+        ${rev.length ? `<table class="tabla"><thead><tr><th>Desafío</th><th>Canal</th><th>Fecha</th><th></th></tr></thead><tbody>${rev.map((d) => `<tr><td><a href="#/desafio/${d.id}">${esc(d.titulo)}</a><br><small style="color:var(--gris)">${d.org} · ${d.comuna}</small></td><td><span class="canal">${d.canal}</span></td><td>${fmt(d.fecha)}</td><td><a class="btn b-verde b-chico" href="#/desafio/${d.id}">Revisar</a></td></tr>`).join('')}</tbody></table>` : '<p class="vacio">No hay desafíos pendientes de revisión.</p>'}</div>
+      <div class="card card-p"><h3 style="margin-bottom:6px">Actividad del agente WhatsApp</h3>${D.registro_agente.length ? `<ul class="lista">${D.registro_agente.slice(0, 6).map(([f, t]) => `<li><span class="fecha">${f}</span><span>${esc(t)}</span></li>`).join('')}</ul>` : '<p class="vacio">Prueba el <a href="#/whatsapp">simulador del agente</a>: lo que haga aparecerá aquí.</p>'}</div></div>`, true);
+  }
+  function desafiosOperador() {
+    vista('#/o/desafios', `<div class="top"><div><h1>Desafíos</h1><p>Todos los desafíos de la plataforma, con su estado y canal de ingreso.</p></div><button class="btn b-gris" id="csv">Exportar a Excel (CSV)</button></div>
+      <div class="card"><table class="tabla"><thead><tr><th>ID</th><th>Desafío</th><th>Organización</th><th>Región</th><th>Canal</th><th>Estado</th></tr></thead><tbody>
+      ${D.desafios.map((d) => `<tr><td>${d.id}</td><td><a href="#/desafio/${d.id}">${esc(d.titulo)}</a></td><td>${d.org}</td><td>${d.region}</td><td><span class="canal">${d.canal}</span></td><td>${est(d.estado)}</td></tr>`).join('')}</tbody></table></div>`, true);
+    $('#csv').addEventListener('click', () => {
+      const filas = [['ID', 'Desafío', 'Organización', 'Región', 'Mineral', 'Canal', 'Estado', 'Fecha']].concat(D.desafios.map((d) => [d.id, d.titulo, d.org, d.region, d.mineral, d.canal, ESTADOS[d.estado].t, d.fecha]));
+      const csv = '﻿' + filas.map((f) => f.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'desafios_greenminetech.csv'; a.click();
+    });
+  }
+  function matchmaking(id) {
+    const d = des(id); const ev = D.evaluaciones[id] || [];
+    vista('#/o/match', `<div class="migas"><a href="#/desafio/${id}">← ${id}</a></div><div class="top"><div><h1>Matchmaking asistido</h1><p>${esc(d.titulo)} · ${d.comuna}, ${d.region}</p></div>${est(d.estado)}</div>
+      <div class="aviso-ia"><span style="font-size:1.2rem">✦</span><div><b>Sugerencia de la IA:</b> estas soluciones son las más parecidas al desafío según su descripción, categoría y región. <b>La decisión es del operador</b> (TDR 4.1.5).</div></div>
+      <div class="comp">${ev.map((e) => { const s = sol(e.sol); return `<div class="card"><div class="cab-c"><div class="fila-sb"><span class="trl">TRL ${s.trl}</span><span class="est ${e.estado === 'Recomendada' ? 'verde' : e.estado === 'Seleccionada' ? 'morado' : 'azul'}">${e.estado}</span></div><h3 style="margin-top:8px">${esc(s.nombre)}</h3><small style="color:var(--gris)">${s.proveedor} · ${s.region}</small></div>
+        <div class="cuerpo-c"><span class="ia-tag">✦ Similitud con el desafío: ${e.ia} %</span><div class="barra-ia"><i style="width:${e.ia}%"></i></div>
+        <dl class="dl" style="margin-top:6px"><dt>Costo</dt><dd>${e.costo}</dd><dt>Plazo</dt><dd>${e.plazo}</dd><dt>Requisitos</dt><dd>${esc(s.req)}</dd></dl><p style="color:var(--gris)">${esc(e.nota)}</p></div>
+        <div class="pie-c"><button class="btn b-verde b-chico" data-sel="${e.sol}">Seleccionar para piloto</button><button class="btn b-gris b-chico" data-desc="${e.sol}">Descartar</button></div></div>`; }).join('')}</div>`, true);
+    app.querySelectorAll('[data-sel]').forEach((b) => b.addEventListener('click', () => { ev.forEach((e) => { e.estado = e.sol === b.dataset.sel ? 'Seleccionada' : 'Descartada'; }); d.historial.push([hoy(), USUARIOS.operador.nombre, `Seleccionó ${sol(b.dataset.sel).nombre} para el piloto`]); D.avisos.unshift([hoy(), `Se seleccionó una solución para tu desafío ${d.id}. Te contactaremos para el piloto.`]); guardar(); toast('Solución seleccionada. Se avisó al productor por WhatsApp.'); matchmaking(id); }));
+    app.querySelectorAll('[data-desc]').forEach((b) => b.addEventListener('click', () => { ev.find((e) => e.sol === b.dataset.desc).estado = 'Descartada'; guardar(); matchmaking(id); }));
+  }
+  function pilotaje(id) {
+    const p = D.pilotajes.find((x) => x.id === id); if (!p) return noEncontrado();
+    const d = des(p.desafio), s = sol(p.solucion);
+    vista('#/pilotaje', `<div class="top"><div><h1>Pilotaje ${p.id}</h1><p>${esc(d.titulo)} · ${s.nombre} (${s.proveedor})</p></div>${est('pilotaje')}</div>
+      <div class="card card-p" style="margin-bottom:18px"><div class="fila-sb"><b>Avance del piloto</b><b>${p.avance} %</b></div><div class="progreso" style="margin-top:8px"><i style="width:${p.avance}%"></i></div><p style="font-size:.84rem;color:var(--gris);margin-top:8px">${fmt(p.inicio)} al ${fmt(p.fin)}</p></div>
+      <div class="dos"><div class="card card-p"><h3 style="margin-bottom:6px">KPIs del piloto</h3><table class="tabla"><thead><tr><th>Indicador</th><th>Meta</th><th>Actual</th></tr></thead><tbody>${p.kpis.map(([k, m, a]) => `<tr><td>${k}</td><td>${m}</td><td><b>${a}</b></td></tr>`).join('')}</tbody></table>
+        <h3 style="margin:18px 0 6px">Incidencias</h3><ul class="lista">${p.incidencias.map(([f, t, r]) => `<li><span class="fecha">${fmt(f)}</span><span>${esc(t)}<br><small style="color:var(--verde-o);font-weight:700">${esc(r)}</small></span></li>`).join('')}</ul></div>
+      <div class="card card-p"><h3 style="margin-bottom:6px">Hitos</h3><ul class="lista hitos">${p.hitos.map(([t, e]) => `<li><span class="p ${e}">${e === 'hecho' ? '✓' : ''}</span>${t}</li>`).join('')}</ul></div></div>`, true);
+  }
+  function barras(datos, alto, color) {
+    const max = Math.max(...datos.map((x) => x[1])), w = 560, h = alto, bw = (w - 40) / datos.length;
+    return `<svg class="graf" viewBox="0 0 ${w} ${h + 30}">${datos.map(([e, v], i) => { const bh = Math.round((h - 20) * v / max); const x = 30 + i * bw; return `<rect x="${x + 6}" y="${h - bh}" width="${bw - 12}" height="${bh}" rx="4" fill="${color}"/><text x="${x + bw / 2}" y="${h - bh - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="#1C2420">${v}</text><text x="${x + bw / 2}" y="${h + 18}" text-anchor="middle" font-size="11.5" fill="#56615B">${e}</text>`; }).join('')}<line x1="30" x2="${w - 10}" y1="${h}" y2="${h}" stroke="#C9D3C4"/></svg>`;
+  }
+  function indicadores() {
+    const porEstado = ORDEN_ESTADOS.slice(1).map((e) => [ESTADOS[e].t.replace('Convocatoria abierta', 'Convocatoria'), D.desafios.filter((d) => d.estado === e).length]);
+    vista('#/o/indicadores', `<div class="top"><div><h1>Indicadores</h1><p>Uso, articulación y foco en pequeña miner&iacute;a. Datos de ejemplo del prototipo.</p></div><div style="display:flex;gap:8px"><button class="btn b-gris" onclick="window.print()">Exportar PDF</button></div></div>
+      <div class="kpis"><div class="card kpi"><b>128</b><span>usuarios registrados</span></div><div class="card kpi"><b>54</b><span>pequeños productores</span></div><div class="card kpi"><b>99,8 %</b><span>disponibilidad del mes</span></div><div class="card kpi"><b>41 %</b><span>desafíos vía WhatsApp</span></div></div>
+      <div class="dos"><div class="card card-p"><h3>Usuarios registrados por mes</h3>${barras([['Mar', 22], ['Abr', 41], ['May', 63], ['Jun', 82], ['Jul', 104], ['Ago', 128]], 190, '#4D7F3A')}</div>
+      <div class="card card-p"><h3>Desafíos por estado</h3>${barras(porEstado, 190, '#86C43F')}</div></div>
+      <div class="card card-p" style="margin-top:18px"><h3 style="margin-bottom:10px">Embudo de activación de pequeños productores</h3>
+        ${[['Contactados', 180], ['Registrados', 54], ['Con desafío publicado', 19], ['En piloto', 4]].map(([t, v]) => `<div style="display:grid;grid-template-columns:200px 1fr 50px;gap:12px;align-items:center;margin-bottom:8px"><span>${t}</span><div class="progreso"><i style="width:${Math.round(v / 1.8)}%"></i></div><b>${v}</b></div>`).join('')}</div>`, true);
+  }
+  function contenidos() {
+    vista('#/o/contenidos', `<div class="top"><div><h1>Contenidos</h1><p>Noticias, guías y convocatorias visibles en el sitio.</p></div><button class="btn b-verde" id="c-n">Nuevo contenido</button></div>
+      <div class="card"><table class="tabla"><thead><tr><th>Título</th><th>Tipo</th><th>Estado</th><th></th></tr></thead><tbody>
+      ${[['Cómo publicar un desafío en 5 minutos', 'Guía', 'Publicado'], ['Convocatoria: soluciones de agua para lixiviación', 'Convocatoria', 'Publicado'], ['Resultados del piloto de control de polvo en Andacollo', 'Noticia', 'Borrador'], ['¿Qué es el TRL? Explicado en simple', 'Guía', 'Publicado']].map(([t, ti, e]) => `<tr><td><b>${t}</b></td><td>${ti}</td><td><span class="est ${e === 'Publicado' ? 'verde' : 'gris'}">${e}</span></td><td><button class="btn b-gris b-chico">Editar</button> <button class="btn b-gris b-chico">${e === 'Publicado' ? 'Despublicar' : 'Publicar'}</button></td></tr>`).join('')}</tbody></table></div>`, true);
+    $('#c-n').addEventListener('click', () => toast('En la plataforma real se abre el editor de contenidos'));
+  }
+  function usuarios() {
+    vista('#/o/usuarios', `<div class="top"><div><h1>Usuarios y permisos</h1><p>Roles por tipo de actor y bitácora de accesos.</p></div><button class="btn b-verde">Invitar usuario</button></div>
+      <div class="card"><table class="tabla"><thead><tr><th>Nombre</th><th>Organización</th><th>Rol</th><th>Último acceso</th><th>Estado</th></tr></thead><tbody>
+      ${[['Luis Araya', 'Minera San Lorenzo', 'Demandante', 'Hoy, vía WhatsApp', 'Activo'], ['Daniela Rojas', 'AquaMin SpA', 'Proveedor', 'Ayer', 'Activo'], ['Carla Pizarro', 'CIPTEMIN', 'Articulador (administrador)', 'Hoy', 'Activo'], ['Pedro Castillo', 'Asociación Minera de Tierra Amarilla', 'Observador', 'Hace 5 días', 'Activo'], ['Jorge Ramos', 'GeoAlerta', 'Proveedor', 'Hace 40 días', 'Deshabilitado']].map(([n, o, r, a, e]) => `<tr><td><b>${n}</b></td><td>${o}</td><td>${r}</td><td>${a}</td><td><span class="est ${e === 'Activo' ? 'verde' : 'gris'}">${e}</span></td></tr>`).join('')}</tbody></table></div>`, true);
+  }
+  function noEncontrado() { vista('#/', '<section class="sec"><h2>No encontramos esa página</h2><a href="#/">Volver al inicio</a></section>'); }
+  
+  const AG = { modo: 'inicio', borrador: {}, chat: [] };
+  const hora = () => new Date().toTimeString().slice(0, 5);
+  function registrar(t) { D.registro_agente.unshift([hora(), t]); guardar(); pintarAcciones(); }
+  function simulador() {
+    vista('#/whatsapp', `<div class="top"><div><h1>Agente GreenMineTech por WhatsApp</h1><p>Simulación del agente con IA: conversa con el productor, lo orienta y hace cosas por él dentro de la plataforma.</p></div></div>
+      <div class="sim"><div class="telefono"><div class="pantalla">
+        <div class="w-cab"><span class="av"><img src="img/greenminetech-logo.png" alt=""></span><div><b>Agente GreenMineTech</b><small id="w-estado">en línea</small></div></div>
+        <div class="w-chat" id="w-chat"><span class="w-fecha">HOY</span></div>
+        <div class="w-rapidas" id="w-rapidas"></div>
+        <form class="w-input" id="w-form"><button type="button" id="w-audio" title="Enviar audio de ejemplo" style="background:#fff"><svg viewBox="0 0 24 24" style="fill:#54656F"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg></button><input id="w-txt" placeholder="Escribe un mensaje" autocomplete="off"><button type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg></button></form>
+      </div></div>
+      <div class="panel-ag"><div class="card card-p"><h2>Lo que hace el agente en la plataforma</h2><p style="color:var(--gris);font-size:.9rem">Cada acción queda registrada y la ve el operador de CIPTEMIN en su bandeja.</p><ul class="acciones-ag" id="w-acc"></ul></div>
+        <div class="card card-p" style="margin-top:16px"><h3 style="margin-bottom:4px">Prueba estos mensajes</h3><p style="font-size:.86rem;color:var(--gris)">Escribe lo que quieras o usa un ejemplo. También puedes mandar un audio con el micrófono.</p>
+          <div class="prueba">${['Hola', 'Tengo un problema en mi faena', '¿Cómo va mi desafío?', '¿Qué es GreenMineTech?', '¿Qué significa TRL?', '¿Cuál es el precio del cobre hoy?', 'Quiero hablar con una persona'].map((t) => `<button data-p="${t}">${t}</button>`).join('')}</div></div>
+        <div class="card card-p" style="margin-top:16px;font-size:.88rem"><b>Cómo está construido:</b> WhatsApp Business Cloud API + modelo de lenguaje empresarial entrenado por SETROF con la base de conocimiento de GreenMineTech, conectado a la API de la plataforma. Responde solo sobre el programa y nunca publica sin confirmación.
+          <div style="margin-top:10px;display:flex;gap:8px"><button class="btn b-gris b-chico" id="w-reset">Reiniciar conversación</button>${rol ? '' : '<a class="btn b-linea b-chico" href="#/ingresar">Ver la plataforma</a>'}</div></div></div></div>`, !!rol);
+    AG.modo = 'inicio'; AG.borrador = {};
+    pintarAcciones();
+    $('#w-form').addEventListener('submit', (e) => { e.preventDefault(); const t = $('#w-txt').value.trim(); if (!t) return; $('#w-txt').value = ''; recibir(t); });
+    $('#w-audio').addEventListener('click', () => recibir('la chancadora se me tapa cuando el mineral viene húmedo, sobre todo en invierno, y pierdo como medio turno', true));
+    app.querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () => recibir(b.dataset.p)));
+    $('#w-reset').addEventListener('click', () => { $('#w-chat').innerHTML = '<span class="w-fecha">HOY</span>'; AG.modo = 'inicio'; AG.borrador = {}; rapidas([]); saludar(); });
+    saludar();
+  }
+  function pintarAcciones() {
+    const ul = $('#w-acc'); if (!ul) return;
+    ul.innerHTML = D.registro_agente.length ? D.registro_agente.slice(0, 12).map(([h, t]) => `<li><span class="ic">✓</span><span>${esc(t)}<small>${h}</small></span></li>`).join('') : '<li class="vacio" style="display:block">Todavía no hay acciones. Conversa con el agente.</li>';
+  }
+  function burbuja(html, quien) {
+    const c = $('#w-chat'); if (!c) return;
+    const el = document.createElement('div'); el.className = 'w-m ' + quien; el.innerHTML = html + `<time>${hora()}${quien === 'yo' ? ' ✓✓' : ''}</time>`;
+    c.appendChild(el); c.scrollTop = c.scrollHeight;
+  }
+  function rapidas(ops) {
+    const r = $('#w-rapidas'); if (!r) return;
+    r.innerHTML = ops.map((o) => `<button type="button">${o}</button>`).join('');
+    r.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => recibir(b.textContent)));
+  }
+  function responder(textos, ops) {
+    const c = $('#w-chat'); if (!c) return;
+    let i = 0; rapidas([]);
+    const sig = () => {
+      if (i >= textos.length) { rapidas(ops || []); return; }
+      const e = document.createElement('div'); e.className = 'w-escribe'; e.innerHTML = '<i></i><i></i><i></i>'; c.appendChild(e); c.scrollTop = c.scrollHeight;
+      $('#w-estado').textContent = 'escribiendo…';
+      setTimeout(() => { e.remove(); $('#w-estado').textContent = 'en línea'; burbuja(textos[i], 'bot'); i++; setTimeout(sig, 350); }, 650 + Math.min(1400, textos[i].length * 12));
+    };
+    sig();
+  }
+  function saludar() {
+    responder(['¡Hola, don Luis! 👋 Soy el agente de <b>GreenMineTech</b>, el programa de CIPTEMIN que ayuda a la pequeña minería a encontrar tecnología para sus faenas.',
+      '¿En qué le puedo ayudar hoy? Me puede escribir o mandar un audio, como prefiera.'], ['Tengo un problema en mi faena', '¿Cómo va mi desafío?', '¿Qué es GreenMineTech?']);
+  }
+  const N = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  function recibir(t, audio) {
+    if (audio) burbuja('<div class="w-audio"><span class="pl"></span><span class="on"></span><span style="font-size:.72rem;color:#667">0:18</span></div>', 'yo');
+    else burbuja(esc(t), 'yo');
+    const n = N(t);
+    if (audio) registrar('Transcribió un audio del productor');
+
+    // flujo de creación de desafío
+    if (AG.modo === 'problema') return problema(t, audio);
+    function problema(t, audio) {
+      AG.borrador.descripcion = t;
+      AG.borrador.titulo = resumirTitulo(t);
+      AG.modo = 'comuna';
+      return responder([`${audio ? 'Escuché su audio. ' : ''}Le entendí: <i>“${esc(t.length > 140 ? t.slice(0, 140) + '…' : t)}”</i>`, 'Eso le pasa a varias faenas y hay soluciones que se pueden probar. Para armar bien su desafío, ¿en qué comuna está su faena?'], ['Diego de Almagro', 'Tierra Amarilla', 'Andacollo']);
+    }
+    if (AG.modo === 'comuna') { AG.borrador.comuna = t; AG.modo = 'mineral'; return responder([`Perfecto, ${esc(t)}. ¿Qué mineral trabaja principalmente?`], ['Cobre', 'Oro', 'Hierro', 'Otro']); }
+    if (AG.modo === 'mineral') { AG.borrador.mineral = t; AG.modo = 'impacto'; return responder(['Gracias. ¿Cómo le afecta este problema en el día a día?'], ['Pierdo horas de turno', 'Me sube los costos', 'Es un riesgo de seguridad']); }
+    if (AG.modo === 'impacto') {
+      AG.borrador.impacto = t; AG.modo = 'confirmar'; const b = AG.borrador;
+      registrar('Armó el borrador de un desafío a partir de la conversación');
+      return responder(['Listo, ya armé su desafío. Se lo leo para que lo revise:',
+        `<div class="tarjeta-d"><b>${esc(b.titulo)}</b><br>${esc(b.descripcion)}<br><br>📍 ${esc(b.comuna)} · ⛏️ ${esc(b.mineral)}<br>⚠️ ${esc(b.impacto)}</div>¿Está bien así para enviarlo a revisión de CIPTEMIN?`], ['Sí, envíalo', 'Quiero cambiar algo']);
+    }
+    if (AG.modo === 'confirmar') {
+      if (/^(si|sí|ok|dale|envia|envíalo|correcto|esta bien|perfecto)/.test(n) || n.includes('envia')) {
+        const b = AG.borrador;
+        const id = crearDesafio({ titulo: b.titulo, descripcion: b.descripcion, comuna: b.comuna, mineral: b.mineral, categoria: categoriaDe(b.descripcion), impacto: b.impacto, urgencia: 'Alta', canal: 'WhatsApp', quien: 'Agente WhatsApp (por ' + USUARIOS.productor.nombre + ')' });
+        AG.modo = 'inicio'; AG.ultimo = id;
+        registrar(`Creó el desafío ${id} y lo envió a revisión de CIPTEMIN`);
+        registrar(`Programó avisos de avance para ${id}`);
+        return responder([`✅ ¡Enviado! Su desafío quedó con el número <b>${id}</b>.`, 'CIPTEMIN lo revisará en los próximos días hábiles. Yo le aviso por aquí apenas lo publiquen y cuando lleguen soluciones. No tiene que entrar a ninguna página.', '¿Le ayudo con algo más?'], ['¿Cómo va mi desafío?', 'Eso es todo, gracias']);
+      }
+      AG.modo = 'problema';
+      return responder(['Claro. Cuénteme de nuevo el problema con los cambios que quiera hacer y lo vuelvo a armar.']);
+    }
+
+    // intenciones generales
+    if (/(persona|humano|operador|ejecutiv|alguien|hablar con)/.test(n)) {
+      registrar('Derivó la conversación a un operador de CIPTEMIN con todo el contexto');
+      return responder(['Por supuesto. Le aviso ahora a Carla, operadora de CIPTEMIN, y le paso todo lo que hemos conversado para que no tenga que repetirlo. 🙌', 'Ella le escribirá por este mismo chat en horario hábil.']);
+    }
+    if (/(problema|desafio|falla|se tapa|se me|necesito|ayuda con|mi faena|perdemos|pierdo)/.test(n) && !/(como va|estado)/.test(n)) {
+      if (/(se tapa|pierdo|perdemos|agua|chancad|polvo|energia|talud|humed)/.test(n) && n.length > 40) { AG.modo = 'problema'; return problema(t, audio); }
+      AG.modo = 'problema';
+      return responder(['Cuénteme qué está pasando en su faena, con sus palabras. Si le acomoda más, mándeme un audio 🎤.']);
+    }
+    if (/(como va|estado|avance|mi desafio|que paso con)/.test(n)) {
+      const mios = D.desafios.filter((d) => d.autor === 'productor').slice(0, 3);
+      registrar('Consultó el estado de los desafíos del productor');
+      return responder(['Le cuento cómo van sus desafíos:', mios.map((d) => `• <b>${d.id}</b> ${esc(d.titulo)}<br>   ➜ ${ESTADOS[d.estado].t}${d.estado === 'evaluacion' ? ' (3 soluciones en estudio)' : ''}`).join('<br>'), '¿Quiere que le explique en qué consiste la etapa en que está alguno?'], ['¿Qué significa TRL?', 'Tengo un problema en mi faena']);
+    }
+    if (/(que es greenmine|que es esto|como funciona|que hacen|para que sirve)/.test(n)) {
+      return responder(['GreenMineTech es un programa de CIPTEMIN, apoyado por CORFO, que conecta los problemas de las faenas con empresas que tienen soluciones tecnológicas. 🤝', 'Funciona en 6 pasos: usted cuenta su problema, se abre una convocatoria, se evalúan las soluciones, CIPTEMIN le propone las mejores, se prueba una en su faena y al final usted decide si la adopta.', 'Publicar su desafío no tiene costo. ¿Quiere contarme un problema de su faena?'], ['Tengo un problema en mi faena']);
+    }
+    if (/trl/.test(n)) {
+      return responder(['El TRL es el nivel de madurez de una tecnología, del 1 al 9. 📈', 'Un TRL 9 ya funciona en faenas reales; un TRL 6 o 7 está probado, pero todavía en etapa de prueba. CIPTEMIN revisa ese nivel antes de proponerle una solución, para que no corra riesgos innecesarios.']);
+    }
+    if (/^(hola|buenas|buenos|alo|hey)/.test(n)) return saludar();
+    if (/(gracias|eso es todo|chao|adios)/.test(n)) return responder(['¡Con gusto, don Luis! Aquí estaré cuando me necesite, a cualquier hora. Que le vaya bien en la faena. ⛏️']);
+    // fuera de ámbito
+    registrar('Mantuvo la conversación dentro de su ámbito (pregunta fuera del programa)');
+    return responder(['Esa pregunta se sale de lo que puedo responder: estoy aquí para ayudarle con GreenMineTech, sus desafíos y sus pilotos. 🙂', '¿Le ayudo con alguna de estas cosas?'], ['Tengo un problema en mi faena', '¿Cómo va mi desafío?', 'Quiero hablar con una persona']);
+  }
+  function resumirTitulo(t) {
+    const n = N(t);
+    if (n.includes('chancad')) return 'Chancadora que se tapa con mineral húmedo';
+    if (n.includes('agua')) return 'Reducir el consumo de agua en la faena';
+    if (n.includes('polvo')) return 'Control de polvo en la faena';
+    if (n.includes('energia') || n.includes('diesel') || n.includes('generador')) return 'Reducir el costo de energía en la faena';
+    if (n.includes('talud') || n.includes('derrumbe')) return 'Monitoreo de estabilidad de taludes';
+    const p = t.split(/[.,;]/)[0]; return p.charAt(0).toUpperCase() + p.slice(1, 70);
+  }
+  function categoriaDe(t) {
+    const n = N(t);
+    if (n.includes('chancad') || n.includes('molien')) return 'Chancado y molienda';
+    if (n.includes('agua')) return 'Agua'; if (n.includes('polvo')) return 'Polvo y emisiones';
+    if (n.includes('energia') || n.includes('diesel')) return 'Energía'; if (n.includes('talud')) return 'Seguridad';
+    return 'Otro';
+  }
+  
+  let fs = 17;
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-acc]'); if (!b) return;
+    if (b.dataset.acc === '+') fs = Math.min(23, fs + 2);
+    if (b.dataset.acc === '-') fs = Math.max(15, fs - 2);
+    document.documentElement.style.setProperty('--fs', fs + 'px');
+    if (b.dataset.acc === 'c') { const on = document.body.classList.toggle('contraste'); b.setAttribute('aria-pressed', on); }
+  });
+  
+  function ruta() {
+    const h = location.hash || '#/';
+    const p = h.slice(2).split('/');
+    if (h === '#/salir') { ponerRol(null); location.hash = '#/ingresar'; return; }
+    const exige = (r) => { if (rol !== r) { location.hash = '#/ingresar'; return false; } return true; };
+    switch (p[0]) {
+      case '': return inicio();
+      case 'ingresar': return ingresar();
+      case 'desafios': return listaPublica();
+      case 'soluciones': return catalogo();
+      case 'desafio': return detalle(p[1]);
+      case 'pilotaje': return pilotaje(p[1]);
+      case 'whatsapp': return simulador();
+      case 'p': if (!exige('productor')) return; return p[1] === 'nuevo' ? nuevoDesafio() : p[1] === 'desafios' ? misDesafios() : panelProductor();
+      case 'v': if (!exige('proveedor')) return; return p[1] === 'soluciones' ? misSoluciones() : panelProveedor();
+      case 'o': if (!exige('operador')) return;
+        if (p[1] === 'desafios') return desafiosOperador();
+        if (p[1] === 'match') return matchmaking(p[2] || 'GMT-0042');
+        if (p[1] === 'indicadores') return indicadores();
+        if (p[1] === 'contenidos') return contenidos();
+        if (p[1] === 'usuarios') return usuarios();
+        return bandeja();
+      default: return noEncontrado();
+    }
+  }
+  const Q = new URLSearchParams(location.search);
+  if (Q.get('rol')) ponerRol(Q.get('rol'));
+  if (Q.get('reiniciar')) { D = JSON.parse(JSON.stringify(DATOS_BASE)); guardar(); }
+  window.addEventListener('hashchange', ruta);
+  ruta();
+  if (Q.get('demo') === 'chat' && location.hash === '#/whatsapp') {
+    const guion = [['Tengo un problema en mi faena', 0], ['__audio', 0], ['Diego de Almagro', 0], ['Cobre', 0], ['Pierdo horas de turno', 0], ['Sí, envíalo', 0]];
+    let k = 0;
+    const paso = () => { if (k >= guion.length) return; const [m] = guion[k++]; if (m === '__audio') $('#w-audio').click(); else recibir(m); setTimeout(paso, 5200); };
+    setTimeout(paso, 3800);
+  }
+})();
